@@ -149,6 +149,8 @@ class PsychrometricChartFull extends HTMLElement {
 
         for (let rh = 10; rh <= 100; rh += 10) {
             ctx.beginPath();
+            let lastX = 0, lastY = 0;
+
             for (let t = -10; t <= 50; t++) {
                 const P_sat = 0.61078 * Math.exp((17.27 * t) / (t + 237.3));
                 const P_v = (rh / 100) * P_sat;
@@ -157,8 +159,13 @@ class PsychrometricChartFull extends HTMLElement {
                 const y = 550 - (P_v / 4) * 500;
 
                 ctx.lineTo(x, y);
+                lastX = x;
+                lastY = y;
             }
+
             ctx.stroke();
+            ctx.fillStyle = textColor;
+            ctx.fillText(`${rh}%`, lastX + 5, lastY + 5);
         }
 
         ctx.fillStyle = comfortColor;
