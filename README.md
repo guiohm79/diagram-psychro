@@ -5,7 +5,8 @@ Dashboard homeassistant
 
 # Psychrometric Chart for Home Assistant
 
-<img width="564" alt="image" src="https://github.com/user-attachments/assets/013aae96-0103-434a-ab0e-e9716773b163">
+<img width="589" alt="image" src="https://github.com/user-attachments/assets/4e711b65-335c-4865-820e-0b8c7a892be6">
+
 
 ## Description
 
