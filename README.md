@@ -48,24 +48,43 @@ Ce projet propose une carte personnalisée pour **Home Assistant**, permettant d
 Ajoutez cette configuration YAML à votre tableau de bord dans **Home Assistant** :
 
 ```yaml
-type: custom:psychrometric-chart-full
+type: custom:psychrometric-chart-enhanced
 points:
   - temp: sensor.bme680_temperature
-    humidity: sensor.bme680_humidity
-    color: '#ff0000'
-    label: Chambre
-  - temp: sensor.living_room_temperature
-    humidity: sensor.living_room_humidity
-    color: '#0000ff'
+    humidity: sensor.bme680_humidite
+    color: "#ff0000"
+    label: Chambre parents
+    icon: mdi:bed
+  - temp: sensor.module_interieur_branche_chambre_noah_temperature
+    humidity: sensor.module_interieur_branche_chambre_noah_humidite
+    color: "#0000ff"
+    label: Chambre Noah
+    icon: mdi:bed
+  - temp: sensor.module_interieur_branche_module_exterieur_asco_temperature
+    humidity: sensor.module_interieur_branche_module_exterieur_asco_humidite
+    color: "#00ff00"
+    label: Exterieur
+  - temp: sensor.module_interieur_branche_temperature
+    humidity: sensor.module_interieur_branche_humidite
+    color: "#8B4513"
     label: Salon
-bgColor: '#110011'
-textColor: '#ffffff'
+    icon: mdi:sofa
+bgColor: "#000000"
+textColor: "#ffffff"
+gridColor: rgba(0, 238, 254, 0.15)
+curveColor: "#3B58DD"
 showCalculatedData: true
 comfortRange:
-  tempMin: 20
-  tempMax: 26
+  tempMin: 18
+  tempMax: 22
   rhMin: 40
   rhMax: 60
-comfortColor: 'rgba(144, 238, 144, 0.5)'
+comfortColor: rgba(144, 238, 144, 0.3)
 massFlowRate: 0.5
-chartTitle: "Diagramme Psychrométrique"
+chartTitle: Diagramme Psychrométrique
+darkMode: true
+showMoldRisk: true
+displayMode: advanced
+showEnthalpy: true
+showLegend: false
+showPointLabels: true
