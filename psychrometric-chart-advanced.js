@@ -359,6 +359,7 @@ class PsychrometricChartEnhanced extends HTMLElement {
             for (let h = 0; h <= 100; h += 10) {
                 ctx.beginPath();
                 let drawn = false;
+                let enthalpy_points = [];
                 
                 for (let t = -10; t <= 50; t += 0.5) {
                     for (let rh = 10; rh <= 100; rh += 5) {
@@ -377,24 +378,68 @@ class PsychrometricChartEnhanced extends HTMLElement {
                             } else {
                                 ctx.lineTo(x, y);
                             }
+                            
+                            // Stocke les points pour choisir un bon emplacement pour l'étiquette
+                            enthalpy_points.push({x, y});
                             break;
                         }
                     }
                 }
                 
                 ctx.stroke();
+                
                 // Ajouter une étiquette pour les courbes d'enthalpie
-                if (drawn) {
+                if (drawn && enthalpy_points.length > 0) {
                     ctx.fillStyle = darkMode ? "rgba(255, 165, 0, 0.9)" : "rgba(255, 99, 71, 0.9)";
-                    // Trouver une position appropriée pour l'étiquette
-                    const labelX = 50 + (20 + 10) * 12; // Autour de 20°C
-                    const rh = 50;
-                    const P_sat = 0.61078 * Math.exp((17.27 * 20) / (20 + 237.3));
-                    const P_v = (rh / 100) * P_sat;
-                    const labelY = 550 - (P_v / 4) * 500 - h * 3;
                     
-                    if (labelY > 50 && labelY < 550) {
-                        ctx.fillText(`${h} kJ/kg`, labelX, labelY);
+                    // Choisir un point près du bord droit pour placer l'étiquette
+                    // Tri des points par coordonnée x décroissante (pour être proche du bord droit)
+                    enthalpy_points.sort((a, b) => b.x - a.x);
+                    
+                    // Sélectionner un point qui est visible sur le graphique (pas trop haut ni trop bas)
+                    let labelPoint = null;
+                    for (const point of enthalpy_points) {
+                        if (point.y > 70 && point.y < 500 && point.x > 400) {
+                            labelPoint = point;
+                            break;
+                        }
+                    }
+                    
+                    // Si aucun point idéal n'est trouvé, prendre le premier point visible
+                    if (!labelPoint) {
+                        for (const point of enthalpy_points) {
+                            if (point.y > 70 && point.y < 500) {
+                                labelPoint = point;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // S'il y a un point valide, afficher l'étiquette
+                    if (labelPoint) {
+                        // Rotation du contexte pour aligner le texte avec la courbe
+                        ctx.save();
+                        
+                        // Trouver un point voisin pour calculer la pente
+                        const neighborIndex = enthalpy_points.indexOf(labelPoint);
+                        const neighborPoint = enthalpy_points[Math.max(0, neighborIndex - 5)];
+                        
+                        if (neighborPoint) {
+                            // Calculer l'angle de la courbe
+                            const angleRad = Math.atan2(neighborPoint.y - labelPoint.y, neighborPoint.x - labelPoint.x);
+                            
+                            // Translater au point d'étiquette
+                            ctx.translate(labelPoint.x, labelPoint.y);
+                            ctx.rotate(angleRad);
+                            
+                            // Dessiner le texte le long de la courbe
+                            ctx.fillText(`${h} kJ/kg`, 5, -5);
+                        } else {
+                            // Si pas de point voisin, simplement placer l'étiquette sans rotation
+                            ctx.fillText(`${h} kJ/kg`, labelPoint.x + 5, labelPoint.y - 5);
+                        }
+                        
+                        ctx.restore();
                     }
                 }
             }
