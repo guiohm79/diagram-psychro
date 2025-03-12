@@ -469,7 +469,7 @@ class PsychrometricChartEnhanced extends HTMLElement {
         // Ajouter un texte pour la zone de confort
         ctx.fillStyle = darkMode ? "rgba(255, 255, 255, 0.7)" : "rgba(0, 0, 0, 0.7)";
         ctx.font = "14px Arial";
-        const comfortLabelX = 50 + (comfortRange.tempMin + comfortRange.tempMax) / 2 * 12 + 10;
+        const comfortLabelX = 180 + (comfortRange.tempMin + comfortRange.tempMax) / 2 * 12 + 10;
         const comfortLabelY = 550 - ((comfortRange.rhMin + comfortRange.rhMax) / 2 / 100 * 0.61078 * Math.exp((17.27 * ((comfortRange.tempMin + comfortRange.tempMax) / 2)) / (((comfortRange.tempMin + comfortRange.tempMax) / 2) + 237.3)) / 4) * 500;
         ctx.fillText("Zone de confort", comfortLabelX - 45, comfortLabelY);
 
