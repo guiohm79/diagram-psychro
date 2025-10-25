@@ -1,9 +1,8 @@
-# diagram-psychro
-Dashboard homeassistant
-
-
-
 # Psychrometric Chart for Home Assistant
+
+[![hacs_badge](https://img.shields.io/badge/HACS-Default-41BDF5.svg)](https://github.com/hacs/integration)
+[![GitHub release](https://img.shields.io/github/release/guiohm79/diagram-psychro.svg)](https://github.com/guiohm79/diagram-psychro/releases)
+[![License](https://img.shields.io/github/license/guiohm79/diagram-psychro.svg)](LICENSE)
 
 <img width="589" alt="image" src="https://github.com/guiohm79/diagram-psychro/blob/b52c0b5e057392bec4b37caf2cf7b8a59845cc21/Capture.png">
 
@@ -64,13 +63,29 @@ Ce projet propose une carte personnalisée pour **Home Assistant**, permettant d
 
 ## Installation
 
-1. **Téléchargez les fichiers** de ce dépôt.
-2. Placez le fichier **`psychrometric-chart-advanced.js`** dans le dossier **`www/custom-lovelace/psychrometric/`** de votre installation Home Assistant.
+### Via HACS (recommandé)
+
+1. Assurez-vous d'avoir [HACS](https://hacs.xyz/) installé dans Home Assistant
+2. Ouvrez HACS dans Home Assistant
+3. Allez dans "Frontend"
+4. Cliquez sur le bouton "+" en bas à droite
+5. Recherchez "Psychrometric Chart"
+6. Cliquez sur "Installer"
+7. Redémarrez Home Assistant
+
+### Installation manuelle
+
+1. **Téléchargez les fichiers** de ce dépôt
+2. Placez le fichier **`psychrometric-chart-advanced.js`** dans le dossier **`www/custom-lovelace/psychrometric/`** de votre installation Home Assistant
 3. Ajoutez le fichier à votre tableau de bord via **Configuration > Tableaux de bord > Ressources** :
-   - URL : `/local/custom-lovelace/psychrometric/psychrometric-chart-advanced.js`.
-   - Type : **Module JavaScript**.
-4. Rechargez l'interface Lovelace dans Home Assistant (CTRL+F5 ou vider le cache).
-5. Assurez-vous que l'**historique** est activé dans votre configuration Home Assistant pour profiter de la fonctionnalité d'historique.
+   - URL : `/local/custom-lovelace/psychrometric/psychrometric-chart-advanced.js`
+   - Type : **Module JavaScript**
+4. Rechargez l'interface Lovelace dans Home Assistant (CTRL+F5 ou vider le cache)
+
+### Prérequis
+
+- Home Assistant 2024.1.0 ou supérieur
+- L'**historique** doit être activé dans votre configuration Home Assistant pour profiter de la fonctionnalité d'historique
 
 ---
 
