@@ -14,32 +14,62 @@ Ce projet propose une carte personnalisée pour **Home Assistant**, permettant d
 
 ## Fonctionnalités
 
-- **Visualisation du diagramme psychrométrique**.
-- **Zone de confort personnalisable** :
-  - Température min/max.
-  - Humidité relative min/max.
-  - Couleur personnalisable pour la zone.
-- **Calculs affichés pour chaque point** :
-  - Température de rosée.
-  - Teneur en eau.
-  - Enthalpie.
-  - Puissances estimées pour chauffer/refroidir et humidifier/déshumidifier.
-- **Options graphiques** :
-  - Couleurs de fond, quadrillage et courbes.
-  - Courbes d'humidité relative (10 % à 100 %).
-- **Lignes pointillées** vers les axes pour chaque point.
-- Débit massique ajustable pour un calcul précis de la puissance.
+### 📊 Visualisation avancée
+- **Diagramme psychrométrique interactif** entièrement responsive
+- **Design moderne** avec effets glassmorphism et animations fluides
+- **Graphique adaptatif** qui s'ajuste automatiquement à la taille de l'écran (mobile, tablette, desktop)
+- **Tooltips au survol** des points avec informations détaillées
+
+### 📈 Historique des données
+- **Modal popup élégant** affichant l'historique sur 24 heures
+- **Graphiques d'évolution** pour température et humidité
+- **Statistiques détaillées** : min, max, moyenne
+- **Clic sur les valeurs** de température ou humidité pour voir l'historique
+- Intégration native avec l'API History de Home Assistant
+
+### 🎨 Interface utilisateur améliorée
+- **Cartes modernes** avec dégradés, ombres portées et effets de profondeur
+- **Animations fluides** lors du chargement et des interactions
+- **Badges de statut** indiquant si les valeurs sont dans la zone de confort
+- **Icônes émojis** pour une meilleure lisibilité
+- **Mode sombre** optimisé avec contraste amélioré
+
+### 📐 Zone de confort personnalisable
+- Température min/max ajustable
+- Humidité relative min/max configurable
+- Couleur personnalisable pour la zone
+- Indicateurs visuels clairs
+
+### 🔬 Calculs scientifiques affichés
+- Température de rosée
+- Teneur en eau
+- Enthalpie
+- Humidité absolue
+- Température de bulbe humide
+- Volume spécifique
+- Indice PMV (confort thermique)
+- Risque de moisissure avec code couleur
+- Puissances estimées pour chauffer/refroidir/humidifier/déshumidifier
+
+### ⚙️ Options graphiques avancées
+- Courbes d'humidité relative (10 % à 100 %)
+- Courbes d'enthalpie optionnelles
+- Points de rosée visualisés
+- Lignes pointillées vers les axes
+- Légende animée et personnalisable
+- Débit massique ajustable pour calculs de puissance précis
 
 ---
 
 ## Installation
 
 1. **Téléchargez les fichiers** de ce dépôt.
-2. Placez le fichier **`psychrometric-chart-full.js`** dans le dossier **`www/custom-lovelace/psychrometric/`** de votre installation Home Assistant.
+2. Placez le fichier **`psychrometric-chart-advanced.js`** dans le dossier **`www/custom-lovelace/psychrometric/`** de votre installation Home Assistant.
 3. Ajoutez le fichier à votre tableau de bord via **Configuration > Tableaux de bord > Ressources** :
-   - URL : `/local/custom-lovelace/psychrometric/psychrometric-chart-full.js`.
-   - Type : **Module**.
-4. Rechargez l'interface Lovelace dans Home Assistant.
+   - URL : `/local/custom-lovelace/psychrometric/psychrometric-chart-advanced.js`.
+   - Type : **Module JavaScript**.
+4. Rechargez l'interface Lovelace dans Home Assistant (CTRL+F5 ou vider le cache).
+5. Assurez-vous que l'**historique** est activé dans votre configuration Home Assistant pour profiter de la fonctionnalité d'historique.
 
 ---
 

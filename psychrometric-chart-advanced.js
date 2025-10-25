@@ -1,11 +1,123 @@
 class PsychrometricChartEnhanced extends HTMLElement {
+    constructor() {
+        super();
+        this._hass = null;
+        this.resizeObserver = null;
+        this.canvasWidth = 800;
+        this.canvasHeight = 600;
+        this.hoveredPoint = null;
+        this.modalOpen = false;
+        this._hasRendered = false;
+        this._previousValues = new Map();
+        this._resizeDebounceTimer = null;
+        this._lastRenderTime = 0;
+    }
+
     set hass(hass) {
+        this._hass = hass;
         if (!this.config || !this.config.points || this.config.points.length === 0) {
             this.innerHTML = `<p style="color: red;">Aucun point ou entité configuré dans la carte !</p>`;
             return;
         }
 
+        // Check if values have changed significantly before rendering
+        if (this._hasRendered && !this.shouldUpdate(hass)) {
+            return;
+        }
+
         this.render(hass);
+    }
+
+    shouldUpdate(hass) {
+        // Always update on first render
+        if (!this._hasRendered) {
+            return true;
+        }
+
+        // Check if any sensor value has changed significantly
+        for (const point of this.config.points) {
+            const tempState = hass.states[point.temp];
+            const humState = hass.states[point.humidity];
+
+            if (!tempState || !humState) continue;
+
+            const newTemp = parseFloat(tempState.state);
+            const newHum = parseFloat(humState.state);
+
+            const key = `${point.temp}_${point.humidity}`;
+            const previous = this._previousValues.get(key);
+
+            if (!previous) {
+                // New sensor, need to update
+                return true;
+            }
+
+            // Check for significant changes
+            const tempDiff = Math.abs(newTemp - previous.temp);
+            const humDiff = Math.abs(newHum - previous.humidity);
+
+            // Thresholds: 0.1°C for temperature, 1% for humidity
+            if (tempDiff > 0.1 || humDiff > 1) {
+                return true;
+            }
+        }
+
+        // No significant changes
+        return false;
+    }
+
+    storeSensorValues(hass) {
+        // Store current values for next comparison
+        for (const point of this.config.points) {
+            const tempState = hass.states[point.temp];
+            const humState = hass.states[point.humidity];
+
+            if (!tempState || !humState) continue;
+
+            const key = `${point.temp}_${point.humidity}`;
+            this._previousValues.set(key, {
+                temp: parseFloat(tempState.state),
+                humidity: parseFloat(humState.state)
+            });
+        }
+    }
+
+    connectedCallback() {
+        // Setup resize observer for responsive design
+        this.setupResizeObserver();
+    }
+
+    disconnectedCallback() {
+        if (this.resizeObserver) {
+            this.resizeObserver.disconnect();
+        }
+    }
+
+    setupResizeObserver() {
+        this.resizeObserver = new ResizeObserver(() => {
+            // Debounce resize events to avoid excessive re-renders
+            if (this._resizeDebounceTimer) {
+                clearTimeout(this._resizeDebounceTimer);
+            }
+
+            this._resizeDebounceTimer = setTimeout(() => {
+                if (this._hass) {
+                    this.updateCanvasSize();
+                    this.render(this._hass);
+                }
+            }, 150); // 150ms debounce
+        });
+        this.resizeObserver.observe(this);
+    }
+
+    updateCanvasSize() {
+        const container = this.querySelector('.chart-container');
+        if (container) {
+            const width = container.offsetWidth;
+            // Maintain aspect ratio
+            this.canvasWidth = Math.max(300, Math.min(width - 40, 1200));
+            this.canvasHeight = Math.floor(this.canvasWidth * 0.75);
+        }
     }
 
     render(hass) {
@@ -93,7 +205,9 @@ class PsychrometricChartEnhanced extends HTMLElement {
                 color: point.color || "#ff0000",
                 label: point.label || `${point.temp} & ${point.humidity}`,
                 icon: point.icon || "mdi:thermometer",
-                inComfortZone: this.isInComfortZone(temp, humidity, comfortRange)
+                inComfortZone: this.isInComfortZone(temp, humidity, comfortRange),
+                tempEntityId: point.temp,
+                humidityEntityId: point.humidity
             };
         });
 
@@ -132,53 +246,90 @@ class PsychrometricChartEnhanced extends HTMLElement {
         const actualTextColor = darkMode ? "#ffffff" : textColor;
         const actualGridColor = darkMode ? "#333333" : gridColor;
 
-        // Construction du HTML pour les données calculées
+        // Construction du HTML pour les données calculées avec design amélioré
         const calculatedDataHTML = showCalculatedData
             ? `
-            <div class="psychro-data" style="margin-top: 20px; text-align: left; font-size: 14px; max-width: 800px; margin-left: auto; margin-right: auto; display: grid; grid-template-columns: repeat(${validPoints.length > 2 ? 2 : 1}, minmax(300px, 1fr)); gap: 20px;">
+            <div class="psychro-data" style="
+                margin-top: 20px;
+                text-align: left;
+                font-size: 14px;
+                max-width: 100%;
+                padding: 0 20px;
+                margin-left: auto;
+                margin-right: auto;
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+                gap: 20px;">
                 ${validPoints
                     .map(
-                        (p) => `
-                    <div class="psychro-point-data" style="padding: 15px; border-radius: 10px; background-color: ${darkMode ? '#2d2d2d' : '#f5f5f5'}; border-left: 5px solid ${p.color};">
-                        <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                            <ha-icon icon="${p.icon}" style="margin-right: 8px; color: ${p.color};"></ha-icon>
-                            <span style="color: ${p.color}; font-weight: bold; font-size: 16px;">
-                                ${p.label}
-                            </span>
-                            ${p.inComfortZone ? 
-                                `<span style="margin-left: auto; background-color: #4CAF50; color: white; padding: 3px 8px; border-radius: 12px; font-size: 12px;">Confort optimal</span>` : 
-                                `<span style="margin-left: auto; background-color: #FF9800; color: white; padding: 3px 8px; border-radius: 12px; font-size: 12px;">Hors zone confort</span>`
-                            }
-                        </div>
-                        
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                            <div>
-                                <div style="margin-bottom: 5px;"><strong>Température:</strong> ${p.temp.toFixed(1)}°C</div>
-                                <div style="margin-bottom: 5px;"><strong>Humidité relative:</strong> ${p.humidity.toFixed(1)}%</div>
-                                <div style="margin-bottom: 5px;"><strong>Point de rosée:</strong> ${p.dewPoint.toFixed(1)}°C</div>
-                                <div style="margin-bottom: 5px;"><strong>Température humide:</strong> ${p.wetBulbTemp.toFixed(1)}°C</div>
-                                <div style="margin-bottom: 5px;"><strong>Enthalpie:</strong> ${p.enthalpy.toFixed(1)} kJ/kg</div>
+                        (p, index) => `
+                    <div class="psychro-point-data"
+                         data-point-index="${index}"
+                         style="
+                            padding: 15px;
+                            border-radius: 15px;
+                            background: ${darkMode ? 'linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%)' : 'linear-gradient(135deg, #ffffff 0%, #f5f5f5 100%)'};
+                            border-left: 5px solid ${p.color};
+                            box-shadow: 0 4px 15px rgba(0, 0, 0, ${darkMode ? '0.3' : '0.1'});
+                            backdrop-filter: blur(10px);
+                            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                            cursor: pointer;
+                            position: relative;
+                            overflow: hidden;
+                            animation: ${this._hasRendered ? 'none' : `fadeInUp 0.5s ease-out ${index * 0.1}s backwards`};">
+                        <div style="
+                            position: absolute;
+                            top: 0;
+                            left: 0;
+                            right: 0;
+                            bottom: 0;
+                            background: radial-gradient(circle at top right, ${p.color}15, transparent);
+                            pointer-events: none;"></div>
+                        <div style="position: relative; z-index: 1;">
+                            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                                <ha-icon icon="${p.icon}" style="margin-right: 8px; color: ${p.color};"></ha-icon>
+                                <span style="color: ${p.color}; font-weight: bold; font-size: 16px;">
+                                    ${p.label}
+                                </span>
+                                ${p.inComfortZone ?
+                                    `<span style="margin-left: auto; background: linear-gradient(135deg, #4CAF50, #45a049); color: white; padding: 4px 10px; border-radius: 15px; font-size: 11px; box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);">✓ Confort optimal</span>` :
+                                    `<span style="margin-left: auto; background: linear-gradient(135deg, #FF9800, #f57c00); color: white; padding: 4px 10px; border-radius: 15px; font-size: 11px; box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);">⚠ Hors confort</span>`
+                                }
                             </div>
-                            <div>
-                                <div style="margin-bottom: 5px;"><strong>Teneur en eau:</strong> ${p.waterContent.toFixed(4)} kg/kg</div>
-                                <div style="margin-bottom: 5px;"><strong>Humidité absolue:</strong> ${p.absoluteHumidity.toFixed(2)} g/m³</div>
-                                <div style="margin-bottom: 5px;"><strong>Volume spécifique:</strong> ${p.specificVolume.toFixed(3)} m³/kg</div>
-                                <div style="margin-bottom: 5px;"><strong>Indice PMV:</strong> ${p.pmv.toFixed(2)}</div>
-                                ${showMoldRisk ? `<div style="margin-bottom: 5px;"><strong>Risque moisissure:</strong> <span style="color: ${this.getMoldRiskColor(p.moldRisk)};">${this.getMoldRiskText(p.moldRisk)}</span></div>` : ''}
-                            </div>
-                        </div>
 
-                        ${p.action ? `
-                        <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid ${darkMode ? '#555' : '#ddd'};">
-                            <div style="margin-bottom: 5px;"><strong>Action recommandée:</strong> ${p.action}</div>
-                            <div style="margin-bottom: 5px;"><strong>Puissance totale:</strong> ${p.power.toFixed(1)} W</div>
-                            ${p.heatingPower > 0 ? `<div style="margin-bottom: 5px;"><strong>Puissance chauffage:</strong> ${p.heatingPower.toFixed(1)} W</div>` : ''}
-                            ${p.coolingPower > 0 ? `<div style="margin-bottom: 5px;"><strong>Puissance refroidissement:</strong> ${p.coolingPower.toFixed(1)} W</div>` : ''}
-                            ${p.humidificationPower > 0 ? `<div style="margin-bottom: 5px;"><strong>Puissance humidification:</strong> ${p.humidificationPower.toFixed(1)} W</div>` : ''}
-                            ${p.dehumidificationPower > 0 ? `<div style="margin-bottom: 5px;"><strong>Puissance déshumidification:</strong> ${p.dehumidificationPower.toFixed(1)} W</div>` : ''}
-                            <div style="margin-bottom: 5px;"><strong>Consigne idéale:</strong> ${p.idealSetpoint.temp.toFixed(1)}°C, ${p.idealSetpoint.humidity.toFixed(0)}%</div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <div>
+                                    <div class="clickable-value" data-entity="${p.tempEntityId}" data-type="temperature" style="margin-bottom: 5px; padding: 5px; border-radius: 5px; transition: background 0.2s; cursor: pointer;">
+                                        <strong>🌡️ Température:</strong> <span style="color: ${p.color}; font-weight: 600;">${p.temp.toFixed(1)}°C</span>
+                                    </div>
+                                    <div class="clickable-value" data-entity="${p.humidityEntityId}" data-type="humidity" style="margin-bottom: 5px; padding: 5px; border-radius: 5px; transition: background 0.2s; cursor: pointer;">
+                                        <strong>💧 Humidité:</strong> <span style="color: ${p.color}; font-weight: 600;">${p.humidity.toFixed(1)}%</span>
+                                    </div>
+                                    <div style="margin-bottom: 5px;"><strong>Point de rosée:</strong> ${p.dewPoint.toFixed(1)}°C</div>
+                                    <div style="margin-bottom: 5px;"><strong>Temp. humide:</strong> ${p.wetBulbTemp.toFixed(1)}°C</div>
+                                    <div style="margin-bottom: 5px;"><strong>Enthalpie:</strong> ${p.enthalpy.toFixed(1)} kJ/kg</div>
+                                </div>
+                                <div>
+                                    <div style="margin-bottom: 5px;"><strong>Teneur eau:</strong> ${p.waterContent.toFixed(4)} kg/kg</div>
+                                    <div style="margin-bottom: 5px;"><strong>Humidité abs.:</strong> ${p.absoluteHumidity.toFixed(2)} g/m³</div>
+                                    <div style="margin-bottom: 5px;"><strong>Vol. spécifique:</strong> ${p.specificVolume.toFixed(3)} m³/kg</div>
+                                    <div style="margin-bottom: 5px;"><strong>Indice PMV:</strong> ${p.pmv.toFixed(2)}</div>
+                                    ${showMoldRisk ? `<div style="margin-bottom: 5px;"><strong>🦠 Moisissure:</strong> <span style="color: ${this.getMoldRiskColor(p.moldRisk)}; font-weight: 600;">${this.getMoldRiskText(p.moldRisk)}</span></div>` : ''}
+                                </div>
+                            </div>
+
+                            ${p.action ? `
+                            <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid ${darkMode ? '#555' : '#ddd'};">
+                                <div style="margin-bottom: 5px;"><strong>⚡ Action:</strong> ${p.action}</div>
+                                <div style="margin-bottom: 5px;"><strong>Puissance totale:</strong> <span style="color: ${p.color}; font-weight: 600;">${p.power.toFixed(1)} W</span></div>
+                                ${p.heatingPower > 0 ? `<div style="margin-bottom: 5px;"><strong>🔥 Chauffage:</strong> ${p.heatingPower.toFixed(1)} W</div>` : ''}
+                                ${p.coolingPower > 0 ? `<div style="margin-bottom: 5px;"><strong>❄️ Refroidissement:</strong> ${p.coolingPower.toFixed(1)} W</div>` : ''}
+                                ${p.humidificationPower > 0 ? `<div style="margin-bottom: 5px;"><strong>💦 Humidification:</strong> ${p.humidificationPower.toFixed(1)} W</div>` : ''}
+                                ${p.dehumidificationPower > 0 ? `<div style="margin-bottom: 5px;"><strong>🌬️ Déshumidification:</strong> ${p.dehumidificationPower.toFixed(1)} W</div>` : ''}
+                                <div style="margin-bottom: 5px;"><strong>🎯 Consigne idéale:</strong> ${p.idealSetpoint.temp.toFixed(1)}°C, ${p.idealSetpoint.humidity.toFixed(0)}%</div>
+                            </div>
+                            ` : ''}
                         </div>
-                        ` : ''}
                     </div>
                 `
                     )
@@ -186,27 +337,154 @@ class PsychrometricChartEnhanced extends HTMLElement {
             </div>`
             : "";
 
-        // Construction du HTML principal
+        // Construction du HTML principal avec styles et modal
         this.innerHTML = `
+            <style>
+                @keyframes fadeInUp {
+                    from {
+                        opacity: 0;
+                        transform: translateY(20px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+
+                @keyframes fadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+
+                @keyframes modalSlideIn {
+                    from {
+                        opacity: 0;
+                        transform: scale(0.9) translateY(-20px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: scale(1) translateY(0);
+                    }
+                }
+
+                .psychro-point-data:hover {
+                    transform: translateY(-5px);
+                    box-shadow: 0 8px 25px rgba(0, 0, 0, ${darkMode ? '0.5' : '0.15'}) !important;
+                }
+
+                .clickable-value:hover {
+                    background: ${darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'} !important;
+                    transform: scale(1.02);
+                }
+
+                .chart-container {
+                    position: relative;
+                    width: 100%;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                }
+
+                #psychroChart {
+                    max-width: 100%;
+                    height: auto;
+                    cursor: crosshair;
+                    transition: all 0.3s ease;
+                }
+
+                .modal-overlay {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0, 0, 0, 0.7);
+                    backdrop-filter: blur(5px);
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    z-index: 9999;
+                    animation: fadeIn 0.3s ease;
+                }
+
+                .modal-content {
+                    background: ${darkMode ? 'linear-gradient(135deg, #2d2d2d, #1a1a1a)' : 'linear-gradient(135deg, #ffffff, #f8f9fa)'};
+                    border-radius: 20px;
+                    padding: 30px;
+                    max-width: 90%;
+                    max-height: 90vh;
+                    overflow-y: auto;
+                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                    animation: modalSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                    position: relative;
+                }
+
+                .modal-close {
+                    position: absolute;
+                    top: 15px;
+                    right: 15px;
+                    background: ${darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'};
+                    border: none;
+                    border-radius: 50%;
+                    width: 40px;
+                    height: 40px;
+                    font-size: 24px;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    color: ${actualTextColor};
+                }
+
+                .modal-close:hover {
+                    background: ${darkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)'};
+                    transform: rotate(90deg);
+                }
+
+                .history-chart {
+                    width: 100%;
+                    height: 300px;
+                    margin-top: 20px;
+                }
+
+                @media (max-width: 768px) {
+                    .psychro-data {
+                        grid-template-columns: 1fr !important;
+                    }
+
+                    .modal-content {
+                        padding: 20px;
+                        max-width: 95%;
+                    }
+                }
+            </style>
             <ha-card>
                 <div style="text-align: center; padding: 16px; background-color: ${actualBgColor}; color: ${actualTextColor};">
-                    <h2 style="margin-top: 0; margin-bottom: 16px; color: ${actualTextColor};">${chartTitle}</h2>
-                    <div style="position: relative;">
-                        <canvas id="psychroChart" width="800" height="600"></canvas>
-                        ${showLegend ? this.generateLegendHTML(validPoints, actualTextColor) : ''}
+                    <h2 style="margin-top: 0; margin-bottom: 16px; color: ${actualTextColor}; animation: ${this._hasRendered ? 'none' : 'fadeInUp 0.5s ease'};">${chartTitle}</h2>
+                    <div class="chart-container" style="position: relative;">
+                        <canvas id="psychroChart" width="${this.canvasWidth}" height="${this.canvasHeight}"></canvas>
+                        ${showLegend ? this.generateLegendHTML(validPoints, actualTextColor, darkMode) : ''}
                     </div>
                     ${calculatedDataHTML}
                 </div>
             </ha-card>
+            <div id="historyModal" style="display: none;"></div>
         `;
 
+        // Store points for later use
+        this.validPoints = validPoints;
+
+        // Store current sensor values for next comparison
+        this.storeSensorValues(hass);
+
+        // Mark as rendered
+        this._hasRendered = true;
+
         // Dessiner le graphique
-        this.drawFullPsychrometricChart(validPoints, { 
-            bgColor: actualBgColor, 
-            gridColor: actualGridColor, 
-            curveColor, 
-            textColor: actualTextColor, 
-            comfortRange, 
+        this.drawFullPsychrometricChart(validPoints, {
+            bgColor: actualBgColor,
+            gridColor: actualGridColor,
+            curveColor,
+            textColor: actualTextColor,
+            comfortRange,
             comfortColor,
             showEnthalpy,
             showWetBulb,
@@ -215,20 +493,378 @@ class PsychrometricChartEnhanced extends HTMLElement {
             displayMode,
             showPointLabels: this.config.showPointLabels
         });
+
+        // Setup event listeners for history modal
+        this.setupHistoryEventListeners(hass, darkMode, actualTextColor, actualBgColor);
+
+        // Setup canvas interactivity
+        this.setupCanvasInteractivity(validPoints);
     }
 
-    generateLegendHTML(points, textColor) {
+    generateLegendHTML(points, textColor, darkMode) {
         return `
-            <div style="position: absolute; top: 10px; right: 10px; background-color: rgba(255,255,255,0.7); padding: 10px; border-radius: 5px; text-align: left;">
-                <div style="margin-bottom: 5px; font-weight: bold; color: ${textColor};">Légende</div>
-                ${points.map(p => `
-                    <div style="display: flex; align-items: center; margin-bottom: 3px;">
-                        <span style="width: 12px; height: 12px; background-color: ${p.color}; display: inline-block; margin-right: 5px; border-radius: 50%;"></span>
-                        <span style="color: ${textColor};">${p.label}</span>
+            <div style="
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                background: ${darkMode ? 'rgba(45, 45, 45, 0.9)' : 'rgba(255,255,255,0.9)'};
+                backdrop-filter: blur(10px);
+                padding: 12px;
+                border-radius: 10px;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, ${darkMode ? '0.5' : '0.2'});
+                text-align: left;
+                animation: ${this._hasRendered ? 'none' : 'fadeInUp 0.5s ease 0.3s backwards'};">
+                <div style="margin-bottom: 8px; font-weight: bold; color: ${textColor}; font-size: 13px;">📍 Légende</div>
+                ${points.map((p, index) => `
+                    <div style="
+                        display: flex;
+                        align-items: center;
+                        margin-bottom: 5px;
+                        animation: ${this._hasRendered ? 'none' : `fadeInUp 0.3s ease ${0.4 + index * 0.1}s backwards`};">
+                        <span style="
+                            width: 12px;
+                            height: 12px;
+                            background-color: ${p.color};
+                            display: inline-block;
+                            margin-right: 8px;
+                            border-radius: 50%;
+                            box-shadow: 0 2px 5px ${p.color}80;"></span>
+                        <span style="color: ${textColor}; font-size: 12px;">${p.label}</span>
                     </div>
                 `).join('')}
             </div>
         `;
+    }
+
+    setupHistoryEventListeners(hass, darkMode, textColor, bgColor) {
+        // Add click listeners to temperature and humidity values
+        setTimeout(() => {
+            const clickableElements = this.querySelectorAll('.clickable-value');
+            clickableElements.forEach(element => {
+                element.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    const entityId = element.getAttribute('data-entity');
+                    const type = element.getAttribute('data-type');
+                    await this.showHistoryModal(entityId, type, hass, darkMode, textColor, bgColor);
+                });
+            });
+        }, 100);
+    }
+
+    async showHistoryModal(entityId, type, hass, darkMode, textColor, bgColor) {
+        if (this.modalOpen) return;
+        this.modalOpen = true;
+
+        const entity = hass.states[entityId];
+        if (!entity) return;
+
+        // Get history data (24 hours)
+        const endTime = new Date();
+        const startTime = new Date(endTime.getTime() - 24 * 60 * 60 * 1000);
+
+        try {
+            const historyData = await this.fetchHistory(hass, entityId, startTime, endTime);
+            this.renderHistoryModal(historyData, entity, type, darkMode, textColor, bgColor);
+        } catch (error) {
+            console.error('Error fetching history:', error);
+            this.renderHistoryModal([], entity, type, darkMode, textColor, bgColor);
+        }
+    }
+
+    async fetchHistory(hass, entityId, startTime, endTime) {
+        try {
+            // Use Home Assistant history API
+            const url = `history/period/${startTime.toISOString()}?filter_entity_id=${entityId}&end_time=${endTime.toISOString()}`;
+            const response = await hass.callApi('GET', url);
+
+            if (response && response[0]) {
+                return response[0];
+            }
+            return [];
+        } catch (error) {
+            console.error('History API error:', error);
+            return [];
+        }
+    }
+
+    renderHistoryModal(historyData, entity, type, darkMode, textColor, bgColor) {
+        const modalContainer = this.querySelector('#historyModal');
+        const unit = type === 'temperature' ? '°C' : '%';
+        const icon = type === 'temperature' ? '🌡️' : '💧';
+        const label = type === 'temperature' ? 'Température' : 'Humidité';
+
+        // Calculate statistics
+        let min = Infinity, max = -Infinity, sum = 0, count = 0;
+        historyData.forEach(item => {
+            const value = parseFloat(item.state);
+            if (!isNaN(value)) {
+                min = Math.min(min, value);
+                max = Math.max(max, value);
+                sum += value;
+                count++;
+            }
+        });
+        const avg = count > 0 ? (sum / count).toFixed(1) : 'N/A';
+        min = count > 0 ? min.toFixed(1) : 'N/A';
+        max = count > 0 ? max.toFixed(1) : 'N/A';
+
+        modalContainer.style.display = 'block';
+        modalContainer.innerHTML = `
+            <div class="modal-overlay">
+                <div class="modal-content" style="color: ${textColor}; min-width: 500px;">
+                    <button class="modal-close">&times;</button>
+                    <h2 style="margin-top: 0; display: flex; align-items: center; gap: 10px;">
+                        ${icon} ${label} - ${entity.attributes.friendly_name || entity.entity_id}
+                    </h2>
+
+                    <div style="
+                        display: grid;
+                        grid-template-columns: repeat(3, 1fr);
+                        gap: 15px;
+                        margin: 20px 0;
+                        padding: 15px;
+                        background: ${darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'};
+                        border-radius: 10px;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 24px; font-weight: bold; color: #4CAF50;">${min}${unit}</div>
+                            <div style="font-size: 12px; opacity: 0.7;">Minimum</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 24px; font-weight: bold; color: #2196F3;">${avg}${unit}</div>
+                            <div style="font-size: 12px; opacity: 0.7;">Moyenne</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="font-size: 24px; font-weight: bold; color: #FF5722;">${max}${unit}</div>
+                            <div style="font-size: 12px; opacity: 0.7;">Maximum</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 20px;">
+                        <canvas id="historyChart" class="history-chart"></canvas>
+                    </div>
+
+                    <div style="margin-top: 15px; font-size: 12px; opacity: 0.6; text-align: center;">
+                        📅 Historique des dernières 24 heures (${count} points de données)
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Draw history chart
+        setTimeout(() => {
+            this.drawHistoryChart(historyData, type, darkMode, textColor, unit);
+        }, 50);
+
+        // Setup close handlers
+        const closeBtn = modalContainer.querySelector('.modal-close');
+        const overlay = modalContainer.querySelector('.modal-overlay');
+
+        closeBtn.addEventListener('click', () => this.closeHistoryModal());
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                this.closeHistoryModal();
+            }
+        });
+    }
+
+    drawHistoryChart(historyData, type, darkMode, textColor, unit) {
+        const canvas = this.querySelector('#historyChart');
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        const width = canvas.offsetWidth;
+        const height = 300;
+        canvas.width = width;
+        canvas.height = height;
+
+        // Prepare data
+        const dataPoints = historyData
+            .map(item => ({
+                time: new Date(item.last_changed || item.last_updated),
+                value: parseFloat(item.state)
+            }))
+            .filter(item => !isNaN(item.value))
+            .sort((a, b) => a.time - b.time);
+
+        if (dataPoints.length === 0) {
+            ctx.fillStyle = textColor;
+            ctx.font = '16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Aucune donnée disponible', width / 2, height / 2);
+            return;
+        }
+
+        // Calculate scales
+        const minValue = Math.min(...dataPoints.map(d => d.value));
+        const maxValue = Math.max(...dataPoints.map(d => d.value));
+        const valueRange = maxValue - minValue || 1;
+        const padding = 50;
+
+        // Clear canvas
+        ctx.fillStyle = darkMode ? '#1a1a1a' : '#ffffff';
+        ctx.fillRect(0, 0, width, height);
+
+        // Draw grid
+        ctx.strokeStyle = darkMode ? '#333' : '#e0e0e0';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([2, 2]);
+
+        for (let i = 0; i <= 5; i++) {
+            const y = padding + (height - 2 * padding) * i / 5;
+            ctx.beginPath();
+            ctx.moveTo(padding, y);
+            ctx.lineTo(width - padding, y);
+            ctx.stroke();
+
+            // Y-axis labels
+            const value = maxValue - (valueRange * i / 5);
+            ctx.fillStyle = textColor;
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'right';
+            ctx.fillText(value.toFixed(1) + unit, padding - 10, y + 4);
+        }
+
+        // Draw line
+        ctx.setLineDash([]);
+        ctx.strokeStyle = type === 'temperature' ? '#FF5722' : '#2196F3';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+
+        dataPoints.forEach((point, index) => {
+            const x = padding + (width - 2 * padding) * index / (dataPoints.length - 1);
+            const y = padding + (height - 2 * padding) * (1 - (point.value - minValue) / valueRange);
+
+            if (index === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+        });
+
+        ctx.stroke();
+
+        // Draw points
+        ctx.fillStyle = type === 'temperature' ? '#FF5722' : '#2196F3';
+        dataPoints.forEach((point, index) => {
+            const x = padding + (width - 2 * padding) * index / (dataPoints.length - 1);
+            const y = padding + (height - 2 * padding) * (1 - (point.value - minValue) / valueRange);
+
+            ctx.beginPath();
+            ctx.arc(x, y, 3, 0, 2 * Math.PI);
+            ctx.fill();
+        });
+
+        // Draw time labels
+        ctx.fillStyle = textColor;
+        ctx.font = '11px Arial';
+        ctx.textAlign = 'center';
+        [0, Math.floor(dataPoints.length / 2), dataPoints.length - 1].forEach(index => {
+            if (dataPoints[index]) {
+                const x = padding + (width - 2 * padding) * index / (dataPoints.length - 1);
+                const time = dataPoints[index].time;
+                ctx.fillText(
+                    time.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+                    x,
+                    height - padding + 20
+                );
+            }
+        });
+    }
+
+    closeHistoryModal() {
+        const modalContainer = this.querySelector('#historyModal');
+        if (modalContainer) {
+            modalContainer.style.display = 'none';
+            modalContainer.innerHTML = '';
+        }
+        this.modalOpen = false;
+    }
+
+    setupCanvasInteractivity(points) {
+        const canvas = this.querySelector('#psychroChart');
+        if (!canvas) return;
+
+        let tooltip = null;
+
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const x = (e.clientX - rect.left) * scaleX;
+            const y = (e.clientY - rect.top) * scaleY;
+
+            // Check if hovering over a point
+            let hoveredPoint = null;
+            points.forEach((point, index) => {
+                const pointX = this.tempToX(point.temp);
+                const pointY = this.humidityToY(point.temp, point.humidity);
+
+                const distance = Math.sqrt((x - pointX) ** 2 + (y - pointY) ** 2);
+                if (distance < 15) {
+                    hoveredPoint = { ...point, index };
+                }
+            });
+
+            if (hoveredPoint) {
+                canvas.style.cursor = 'pointer';
+                this.showTooltip(e, hoveredPoint, rect);
+            } else {
+                canvas.style.cursor = 'crosshair';
+                this.hideTooltip();
+            }
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            this.hideTooltip();
+        });
+    }
+
+    tempToX(temp) {
+        return 50 + (temp + 10) * (this.canvasWidth / 800) * 12;
+    }
+
+    humidityToY(temp, humidity) {
+        const P_sat = 0.61078 * Math.exp((17.27 * temp) / (temp + 237.3));
+        const P_v = (humidity / 100) * P_sat;
+        return 550 * (this.canvasHeight / 600) - (P_v / 4) * 500 * (this.canvasHeight / 600);
+    }
+
+    showTooltip(event, point, canvasRect) {
+        this.hideTooltip();
+
+        const tooltip = document.createElement('div');
+        tooltip.id = 'psychro-tooltip';
+        tooltip.style.cssText = `
+            position: fixed;
+            left: ${event.clientX + 15}px;
+            top: ${event.clientY + 15}px;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 13px;
+            z-index: 10000;
+            pointer-events: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            animation: fadeIn 0.2s ease;
+            border-left: 3px solid ${point.color};
+        `;
+
+        tooltip.innerHTML = `
+            <div style="font-weight: bold; margin-bottom: 5px; color: ${point.color};">${point.label}</div>
+            <div>🌡️ Temp: <strong>${point.temp.toFixed(1)}°C</strong></div>
+            <div>💧 Humidité: <strong>${point.humidity.toFixed(1)}%</strong></div>
+            <div style="margin-top: 5px; font-size: 11px; opacity: 0.8;">Cliquer pour voir l'historique</div>
+        `;
+
+        document.body.appendChild(tooltip);
+    }
+
+    hideTooltip() {
+        const tooltip = document.getElementById('psychro-tooltip');
+        if (tooltip) {
+            tooltip.remove();
+        }
     }
 
     isInComfortZone(temp, humidity, comfortRange) {
@@ -268,14 +904,18 @@ class PsychrometricChartEnhanced extends HTMLElement {
     
     drawFullPsychrometricChart(points, options) {
         const canvas = this.querySelector("#psychroChart");
-        const ctx = canvas.getContext("2d");
+        if (!canvas) return;
 
-        const { 
-            bgColor, 
-            gridColor, 
-            curveColor, 
-            textColor, 
-            comfortRange, 
+        const ctx = canvas.getContext("2d");
+        const width = canvas.width;
+        const height = canvas.height;
+
+        const {
+            bgColor,
+            gridColor,
+            curveColor,
+            textColor,
+            comfortRange,
             comfortColor,
             showEnthalpy = true,
             showWetBulb = true,
@@ -286,159 +926,161 @@ class PsychrometricChartEnhanced extends HTMLElement {
 
         } = options;
 
+        // Scale factors for responsive design
+        const scaleX = width / 800;
+        const scaleY = height / 600;
+        const scale = Math.min(scaleX, scaleY);
+
         // Effacer le canvas
         ctx.fillStyle = bgColor;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillRect(0, 0, width, height);
 
         // Dessiner les axes et le quadrillage
         ctx.strokeStyle = gridColor;
-        ctx.lineWidth = 1;
-        ctx.setLineDash([5, 5]);
+        ctx.lineWidth = 1 * scale;
+        ctx.setLineDash([5 * scale, 5 * scale]);
+
+        // Responsive padding and dimensions
+        const leftPadding = 50 * scaleX;
+        const rightEdge = 750 * scaleX;
+        const topPadding = 50 * scaleY;
+        const bottomEdge = 550 * scaleY;
+        const chartHeight = bottomEdge - topPadding;
+        const chartWidth = rightEdge - leftPadding;
 
         // Axes de pression de vapeur (vertical)
+        ctx.font = `${Math.max(10, 12 * scale)}px Arial`;
         for (let i = 0; i <= 4; i += 0.5) {
-            const y = 550 - (i / 4) * 500;
+            const y = bottomEdge - (i / 4) * chartHeight;
             ctx.beginPath();
-            ctx.moveTo(50, y);
-            ctx.lineTo(750, y);
+            ctx.moveTo(leftPadding, y);
+            ctx.lineTo(rightEdge, y);
             ctx.stroke();
             ctx.fillStyle = textColor;
-            ctx.fillText(`${i.toFixed(1)} kPa`, 10, y + 5);
+            ctx.fillText(`${i.toFixed(1)} kPa`, 10 * scaleX, y + 5 * scaleY);
         }
 
         // Axes de température (horizontal)
         for (let i = -10; i <= 50; i += 5) {
-            const x = 50 + (i + 10) * 12;
+            const x = leftPadding + (i + 10) * 12 * scaleX;
             ctx.beginPath();
-            ctx.moveTo(x, 550);
-            ctx.lineTo(x, 50);
+            ctx.moveTo(x, bottomEdge);
+            ctx.lineTo(x, topPadding);
             ctx.stroke();
             ctx.fillStyle = textColor;
-            ctx.fillText(`${i}°C`, x - 10, 570);
+            ctx.fillText(`${i}°C`, x - 10 * scaleX, bottomEdge + 20 * scaleY);
         }
 
         // Dessiner les courbes d'humidité relative
         ctx.setLineDash([]);
-        ctx.font = "12px Arial";
+        ctx.font = `${Math.max(10, 12 * scale)}px Arial`;
 
         for (let rh = 10; rh <= 100; rh += 10) {
             ctx.beginPath();
             ctx.strokeStyle = rh === 100 ? "rgba(30, 144, 255, 0.8)" : curveColor;
-            ctx.lineWidth = rh % 20 === 0 ? 1.5 : 0.8;
-            
+            ctx.lineWidth = (rh % 20 === 0 ? 1.5 : 0.8) * scale;
+
             let lastX = 0, lastY = 0;
 
             for (let t = -10; t <= 50; t++) {
                 const P_sat = 0.61078 * Math.exp((17.27 * t) / (t + 237.3));
                 const P_v = (rh / 100) * P_sat;
 
-                const x = 50 + (t + 10) * 12;
-                const y = 550 - (P_v / 4) * 500;
+                const x = leftPadding + (t + 10) * 12 * scaleX;
+                const y = bottomEdge - (P_v / 4) * chartHeight;
 
                 if (t === -10) {
                     ctx.moveTo(x, y);
                 } else {
                     ctx.lineTo(x, y);
                 }
-                
+
                 lastX = x;
                 lastY = y;
             }
 
             ctx.stroke();
             ctx.fillStyle = textColor;
-            ctx.fillText(`${rh}%`, lastX + 5, lastY);
+            ctx.fillText(`${rh}%`, lastX + 5 * scaleX, lastY);
         }
 
 
         // Dessiner les courbes d'enthalpie si demandé
         if (showEnthalpy && displayMode !== "minimal") {
-            ctx.setLineDash([2, 3]);
+            ctx.setLineDash([2 * scale, 3 * scale]);
             ctx.strokeStyle = darkMode ? "rgba(255, 165, 0, 0.7)" : "rgba(255, 99, 71, 0.7)";
-            
+
             for (let h = 0; h <= 100; h += 10) {
                 ctx.beginPath();
                 let drawn = false;
                 let enthalpy_points = [];
-                
+
                 for (let t = -10; t <= 50; t += 0.5) {
                     for (let rh = 10; rh <= 100; rh += 5) {
                         const P_sat = 0.61078 * Math.exp((17.27 * t) / (t + 237.3));
                         const P_v = (rh / 100) * P_sat;
                         const W = 0.622 * (P_v / (101.325 - P_v));
                         const enthalpy = 1.006 * t + W * (2501 + 1.84 * t);
-                        
+
                         if (Math.abs(enthalpy - h) < 0.5) {
-                            const x = 50 + (t + 10) * 12;
-                            const y = 550 - (P_v / 4) * 500;
-                            
+                            const x = leftPadding + (t + 10) * 12 * scaleX;
+                            const y = bottomEdge - (P_v / 4) * chartHeight;
+
                             if (!drawn) {
                                 ctx.moveTo(x, y);
                                 drawn = true;
                             } else {
                                 ctx.lineTo(x, y);
                             }
-                            
-                            // Stocke les points pour choisir un bon emplacement pour l'étiquette
+
                             enthalpy_points.push({x, y});
                             break;
                         }
                     }
                 }
-                
+
                 ctx.stroke();
-                
+
                 // Ajouter une étiquette pour les courbes d'enthalpie
                 if (drawn && enthalpy_points.length > 0) {
                     ctx.fillStyle = darkMode ? "rgba(255, 165, 0, 0.9)" : "rgba(255, 99, 71, 0.9)";
-                    
-                    // Choisir un point près du bord droit pour placer l'étiquette
-                    // Tri des points par coordonnée x décroissante (pour être proche du bord droit)
+
                     enthalpy_points.sort((a, b) => b.x - a.x);
-                    
-                    // Sélectionner un point qui est visible sur le graphique (pas trop haut ni trop bas)
+
                     let labelPoint = null;
                     for (const point of enthalpy_points) {
-                        if (point.y > 70 && point.y < 500 && point.x > 400) {
+                        if (point.y > 70 * scaleY && point.y < 500 * scaleY && point.x > 400 * scaleX) {
                             labelPoint = point;
                             break;
                         }
                     }
-                    
-                    // Si aucun point idéal n'est trouvé, prendre le premier point visible
+
                     if (!labelPoint) {
                         for (const point of enthalpy_points) {
-                            if (point.y > 70 && point.y < 500) {
+                            if (point.y > 70 * scaleY && point.y < 500 * scaleY) {
                                 labelPoint = point;
                                 break;
                             }
                         }
                     }
-                    
-                    // S'il y a un point valide, afficher l'étiquette
+
                     if (labelPoint) {
-                        // Rotation du contexte pour aligner le texte avec la courbe
                         ctx.save();
-                        
-                        // Trouver un point voisin pour calculer la pente
+
                         const neighborIndex = enthalpy_points.indexOf(labelPoint);
                         const neighborPoint = enthalpy_points[Math.max(0, neighborIndex - 5)];
-                        
+
                         if (neighborPoint) {
-                            // Calculer l'angle de la courbe
                             const angleRad = Math.atan2(neighborPoint.y - labelPoint.y, neighborPoint.x - labelPoint.x);
-                            
-                            // Translater au point d'étiquette
+
                             ctx.translate(labelPoint.x, labelPoint.y);
                             ctx.rotate(angleRad);
-                            
-                            // Dessiner le texte le long de la courbe
-                            ctx.fillText(`${h} kJ/kg`, 5, -5);
+
+                            ctx.fillText(`${h} kJ/kg`, 5 * scale, -5 * scale);
                         } else {
-                            // Si pas de point voisin, simplement placer l'étiquette sans rotation
-                            ctx.fillText(`${h} kJ/kg`, labelPoint.x + 5, labelPoint.y - 5);
+                            ctx.fillText(`${h} kJ/kg`, labelPoint.x + 5 * scaleX, labelPoint.y - 5 * scaleY);
                         }
-                        
+
                         ctx.restore();
                     }
                 }
@@ -458,85 +1100,97 @@ class PsychrometricChartEnhanced extends HTMLElement {
         comfortPoints.forEach((point, index) => {
             const P_sat = 0.61078 * Math.exp((17.27 * point.temp) / (point.temp + 237.3));
             const P_v = (point.rh / 100) * P_sat;
-            const x = 50 + (point.temp + 10) * 12;
-            const y = 550 - (P_v / 4) * 500;
+            const x = leftPadding + (point.temp + 10) * 12 * scaleX;
+            const y = bottomEdge - (P_v / 4) * chartHeight;
             if (index === 0) ctx.moveTo(x, y);
             else ctx.lineTo(x, y);
         });
         ctx.closePath();
         ctx.fill();
-        
+
         // Ajouter un texte pour la zone de confort
         ctx.fillStyle = darkMode ? "rgba(255, 255, 255, 0.7)" : "rgba(0, 0, 0, 0.7)";
-        ctx.font = "14px Arial";
-        const comfortLabelX = 50 + (comfortRange.tempMin + comfortRange.tempMax) / 2 * 12 + 10;
-        const comfortLabelY = 550 - ((comfortRange.rhMin + comfortRange.rhMax) / 2 / 100 * 0.61078 * Math.exp((17.27 * ((comfortRange.tempMin + comfortRange.tempMax) / 2)) / (((comfortRange.tempMin + comfortRange.tempMax) / 2) + 237.3)) / 4) * 500;
-        ctx.fillText("Zone de confort", comfortLabelX - 45, comfortLabelY);
+        ctx.font = `${Math.max(12, 14 * scale)}px Arial`;
+        const avgTemp = (comfortRange.tempMin + comfortRange.tempMax) / 2;
+        const avgRh = (comfortRange.rhMin + comfortRange.rhMax) / 2;
+        const comfortLabelX = leftPadding + avgTemp * 12 * scaleX + 10 * scaleX;
+        const P_sat_comfort = 0.61078 * Math.exp((17.27 * avgTemp) / (avgTemp + 237.3));
+        const comfortLabelY = bottomEdge - ((avgRh / 100) * P_sat_comfort / 4) * chartHeight;
+        ctx.fillText("Zone de confort", comfortLabelX - 45 * scale, comfortLabelY);
 
-        // Dessiner les points de mesure
-        points.forEach((point) => {
+        // Dessiner les points de mesure avec animation
+        points.forEach((point, index) => {
             const { temp, humidity, color, dewPoint } = point;
 
             const P_sat_temp = 0.61078 * Math.exp((17.27 * temp) / (temp + 237.3));
             const P_v_actual = (humidity / 100) * P_sat_temp;
 
-            const x = 50 + (temp + 10) * 12;
-            const y = 550 - (P_v_actual / 4) * 500;
+            const x = leftPadding + (temp + 10) * 12 * scaleX;
+            const y = bottomEdge - (P_v_actual / 4) * chartHeight;
 
-            // Dessiner le point
+            // Dessiner le point avec effet pulse
             ctx.fillStyle = color;
             ctx.beginPath();
-            ctx.arc(x, y, 6, 0, 2 * Math.PI);
+            ctx.arc(x, y, 6 * scale, 0, 2 * Math.PI);
             ctx.fill();
             ctx.strokeStyle = darkMode ? "#ffffff" : "#000000";
-            ctx.lineWidth = 1;
+            ctx.lineWidth = 2 * scale;
+            ctx.stroke();
+
+            // Ajouter un halo pour plus de visibilité
+            ctx.beginPath();
+            ctx.arc(x, y, 10 * scale, 0, 2 * Math.PI);
+            ctx.strokeStyle = color + '40';
+            ctx.lineWidth = 3 * scale;
             ctx.stroke();
 
             // Dessiner les lignes pointillées
             ctx.strokeStyle = color;
-            ctx.setLineDash([5, 5]);
-            
+            ctx.setLineDash([5 * scale, 5 * scale]);
+            ctx.lineWidth = 1 * scale;
+
             // Ligne verticale vers l'axe X
             ctx.beginPath();
-            ctx.moveTo(x, 550);
+            ctx.moveTo(x, bottomEdge);
             ctx.lineTo(x, y);
             ctx.stroke();
 
             // Ligne horizontale vers l'axe Y
             ctx.beginPath();
-            ctx.moveTo(50, y);
+            ctx.moveTo(leftPadding, y);
             ctx.lineTo(x, y);
             ctx.stroke();
-            
+
             // Dessiner le point de rosée si demandé
             if (showDewPoint && displayMode !== "minimal") {
                 const dewP_sat = 0.61078 * Math.exp((17.27 * dewPoint) / (dewPoint + 237.3));
-                const dewX = 50 + (dewPoint + 10) * 12;
-                const dewY = 550 - (dewP_sat / 4) * 500;
-                
+                const dewX = leftPadding + (dewPoint + 10) * 12 * scaleX;
+                const dewY = bottomEdge - (dewP_sat / 4) * chartHeight;
+
                 // Point de rosée
                 ctx.beginPath();
-                ctx.arc(dewX, dewY, 4, 0, 2 * Math.PI);
+                ctx.arc(dewX, dewY, 4 * scale, 0, 2 * Math.PI);
                 ctx.fillStyle = "rgba(0, 0, 255, 0.5)";
                 ctx.fill();
-                
+
                 // Ligne du point actuel au point de rosée
                 ctx.beginPath();
-                ctx.setLineDash([3, 3]);
+                ctx.setLineDash([3 * scale, 3 * scale]);
                 ctx.strokeStyle = "rgba(0, 0, 255, 0.5)";
+                ctx.lineWidth = 1 * scale;
                 ctx.moveTo(x, y);
                 ctx.lineTo(dewX, dewY);
                 ctx.stroke();
-                
+
                 // Rétablir le style
                 ctx.setLineDash([]);
             }
-            
+
             // Ajouter une étiquette au point
             if (this.config.showPointLabels !== false) {
                 ctx.fillStyle = textColor;
-                ctx.font = "10px Arial";
-                ctx.fillText(point.label, x + 10, y - 10);
+                ctx.font = `${Math.max(10, 10 * scale)}px Arial`;
+                ctx.fillText(point.label, x + 10 * scaleX, y - 10 * scaleY);
             }
         });
     }

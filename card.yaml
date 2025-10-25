@@ -1,0 +1,46 @@
+type: custom:psychrometric-chart-enhanced
+points:
+  - temp: sensor.bme680_temperature
+    humidity: sensor.bme680_humidite
+    color: "#ff0000"
+    label: Chambre parents
+    icon: mdi:bed
+  - temp: sensor.module_interieur_branche_chambre_noah_temperature
+    humidity: sensor.module_interieur_branche_chambre_noah_humidite
+    color: "#0000ff"
+    label: Chambre Noah
+    icon: mdi:bed
+  - temp: sensor.indoor_outdoor_meter_1151_temperature
+    humidity: sensor.indoor_outdoor_meter_1151_humidite
+    color: "#00ff00"
+    label: Exterieur
+  - temp: sensor.module_interieur_branche_temperature
+    humidity: sensor.module_interieur_branche_humidite
+    color: "#8B4513"
+    label: Salon
+    icon: mdi:sofa
+  - temp: sensor.chambre_emma_temperature
+    humidity: sensor.chambre_emma_humidite
+    color: "#8B45FF"
+    label: Chambre Emma
+    icon: mdi:bed
+bgColor: "#000000"
+textColor: "#ffffff"
+gridColor: rgba(0, 238, 254, 0.15)
+curveColor: "#3B58DD"
+showCalculatedData: true
+comfortRange:
+  tempMin: 19
+  tempMax: 25
+  rhMin: 40
+  rhMax: 60
+comfortColor: rgba(144, 238, 144, 0.3)
+massFlowRate: 0.5
+chartTitle: Diagramme Psychrométrique
+darkMode: true
+showMoldRisk: true
+displayMode: advanced
+showEnthalpy: true
+showLegend: true
+showPointLabels: false
+
