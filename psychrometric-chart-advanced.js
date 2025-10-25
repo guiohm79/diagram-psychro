@@ -1215,10 +1215,15 @@ class PsychrometricChartEnhanced extends HTMLElement {
 
     calculateAbsoluteHumidity(temp, rh) {
         // Calcul de l'humidité absolue en g/m³
+        // Formule : ρv = (Pv × 1000) / (Rv × T)
+        // Rv = 461.5 J/(kg·K) - constante spécifique de la vapeur d'eau
         const P_sat = 0.61078 * Math.exp((17.27 * temp) / (temp + 237.3));
-        const P_v = (rh / 100) * P_sat;
-        const absHumidity = (P_v * 1000) / (461.5 * (temp + 273.15));
-        return absHumidity * 1000; // Conversion en g/m³
+        const P_v = (rh / 100) * P_sat; // kPa
+
+        // Conversion : kPa → Pa → kg/m³ → g/m³
+        const P_v_Pa = P_v * 1000; // kPa vers Pa
+        const absHumidity_kg = P_v_Pa / (461.5 * (temp + 273.15)); // kg/m³
+        return absHumidity_kg * 1000; // g/m³
     }
 
     calculateWetBulbTemp(temp, rh) {
@@ -1248,6 +1253,8 @@ class PsychrometricChartEnhanced extends HTMLElement {
     }
 
     calculateMoldRisk(temp, humidity) {
+        // ⚠️ NOTE : Heuristique simplifiée, pas un calcul scientifique validé
+        // Pour une évaluation précise, utilisez les modèles VTT ou IEA Annex 55
         // Calcul du risque de moisissure (échelle 0-6)
         // Basé sur les conditions favorables à la croissance des moisissures
         
@@ -1289,7 +1296,9 @@ class PsychrometricChartEnhanced extends HTMLElement {
     }
 
     calculatePMV(temp, humidity) {
-        // Calcul de l'indice PMV (Predicted Mean Vote) simplifié
+        // ⚠️ AVERTISSEMENT : Calcul PMV très simplifié, à titre indicatif uniquement
+        // Ce calcul ne suit PAS la norme ISO 7730 complète (nécessiterait ~50 lignes)
+        // Pour une évaluation précise du confort thermique, utilisez un logiciel spécialisé
         // Paramètres standards: vêtements=0.7 clo, activité=1.2 met, vitesse air=0.1 m/s
         
         // Conversion en paramètres nécessaires

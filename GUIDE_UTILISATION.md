@@ -318,4 +318,4 @@ Pour toute question ou problème :
 
 **Version** : 2.0
 **Date** : 25 octobre 2025
-**Auteur** : Claude Code + guioh
+

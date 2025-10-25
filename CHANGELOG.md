@@ -1,5 +1,33 @@
 # Changelog - Carte Psychrométrique
 
+## Version 2.2 - Audit et corrections des calculs (2025-10-25)
+
+### 🔬 Audit des calculs psychrométriques
+
+#### Corrections apportées
+- ✅ **Humidité absolue** : Clarification du calcul (lignes 1216-1227)
+  - Ajout de commentaires explicatifs
+  - Séparation claire des étapes de conversion
+  - Code plus lisible et maintenable
+
+#### Avertissements ajoutés
+- ⚠️ **PMV (Predicted Mean Vote)** : Avertissement sur la simplification du calcul
+  - Note indiquant que ce n'est pas conforme ISO 7730
+  - Recommandation d'utiliser un logiciel spécialisé pour évaluation précise
+
+- ⚠️ **Risque moisissure** : Note sur la nature heuristique
+  - Indication que c'est une approximation, pas un modèle scientifique
+  - Référence aux modèles VTT et IEA Annex 55 pour précision
+
+#### Validation complète
+- ✅ **Tous les calculs essentiels validés** : Point de rosée, teneur en eau, enthalpie, etc.
+- ✅ **Documentation complète** : Voir AUDIT_CALCULS.md
+
+### 📝 Documentation ajoutée
+- Nouveau fichier **AUDIT_CALCULS.md** avec analyse détaillée de tous les calculs
+
+---
+
 ## Version 2.1 - Correction du clignotement (2025-10-25)
 
 ### 🐛 Bug fixes critiques
