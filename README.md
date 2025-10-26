@@ -1,10 +1,14 @@
-# Psychrometric Chart for Home Assistant
+<div align="center">
+  <img src="icon.svg" alt="Psychrometric Chart Logo" width="200"/>
 
-[![hacs_badge](https://img.shields.io/badge/HACS-Default-41BDF5.svg)](https://github.com/hacs/integration)
-[![GitHub release](https://img.shields.io/github/release/guiohm79/diagram-psychro.svg)](https://github.com/guiohm79/diagram-psychro/releases)
-[![License](https://img.shields.io/github/license/guiohm79/diagram-psychro.svg)](LICENSE)
+  # Psychrometric Chart for Home Assistant
 
-<img width="589" alt="image" src="https://github.com/guiohm79/diagram-psychro/blob/b52c0b5e057392bec4b37caf2cf7b8a59845cc21/Capture.png">
+  [![hacs_badge](https://img.shields.io/badge/HACS-Default-41BDF5.svg)](https://github.com/hacs/integration)
+  [![GitHub release](https://img.shields.io/github/release/guiohm79/psychrometric-chart-advanced.svg)](https://github.com/guiohm79/psychrometric-chart-advanced/releases)
+  [![License](https://img.shields.io/github/license/guiohm79/psychrometric-chart-advanced.svg)](LICENSE)
+</div>
+
+<img width="589" alt="image" src="https://github.com/guiohm79/psychrometric-chart-advanced/blob/main/Capture.png">
 
 
 

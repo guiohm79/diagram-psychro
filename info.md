@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="icon.svg" alt="Psychrometric Chart" width="120"/>
+</div>
+
 # Psychrometric Chart for Home Assistant
 
 A modern, interactive psychrometric chart card for Home Assistant that visualizes temperature and humidity data from your sensors with advanced calculations and beautiful UI.

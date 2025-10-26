@@ -13,7 +13,7 @@ git push origin v1.0.0
 
 ## Étape 2 : Créer la Release sur GitHub
 
-1. Allez sur : https://github.com/guiohm79/diagram-psychro/releases
+1. Allez sur : https://github.com/guiohm79/psychrometric-chart-advanced/releases
 2. Cliquez sur "Draft a new release"
 3. Sélectionnez le tag `v1.0.0`
 4. Titre : **v1.0.0 - First HACS Release**
@@ -42,7 +42,7 @@ This is the first official release of the Psychrometric Chart for Home Assistant
 
 ### Installation
 
-Install via HACS or manually. See [README](https://github.com/guiohm79/diagram-psychro/blob/main/README.md) for detailed instructions.
+Install via HACS or manually. See [README](https://github.com/guiohm79/psychrometric-chart-advanced/blob/main/README.md) for detailed instructions.
 
 ### Configuration
 
@@ -62,7 +62,7 @@ showCalculatedData: true
 darkMode: true
 ```
 
-Full changelog available in [CHANGELOG.md](https://github.com/guiohm79/diagram-psychro/blob/main/CHANGELOG.md)
+Full changelog available in [CHANGELOG.md](https://github.com/guiohm79/psychrometric-chart-advanced/blob/main/CHANGELOG.md)
 ```
 
 6. Cliquez sur "Publish release"
@@ -87,12 +87,12 @@ Avant de soumettre, vérifiez que votre dépôt respecte tous les critères HACS
 2. Forkez le dépôt
 3. Éditez le fichier `plugins` (ajoutez votre dépôt à la liste) :
    ```
-   guiohm79/diagram-psychro
+   guiohm79/psychrometric-chart-advanced
    ```
-4. Créez une Pull Request avec le titre : **Add guiohm79/diagram-psychro**
+4. Créez une Pull Request avec le titre : **Add guiohm79/psychrometric-chart-advanced**
 5. Dans la description, indiquez :
    ```
-   Repository: https://github.com/guiohm79/diagram-psychro
+   Repository: https://github.com/guiohm79/psychrometric-chart-advanced
    Category: plugin
    Description: Interactive psychrometric chart with advanced calculations for Home Assistant
    ```

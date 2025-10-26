@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a237e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0d47a1;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="chartGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#00bcd4;stop-opacity:0.8" />
+      <stop offset="50%" style="stop-color:#4caf50;stop-opacity:0.8" />
+      <stop offset="100%" style="stop-color:#ff9800;stop-opacity:0.8" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="240" fill="url(#bgGradient)" opacity="0.95"/>
+
+  <!-- Outer border -->
+  <circle cx="256" cy="256" r="240" fill="none" stroke="#00bcd4" stroke-width="4" opacity="0.5"/>
+
+  <!-- Grid background -->
+  <g opacity="0.15" stroke="#ffffff" stroke-width="1">
+    <line x1="100" y1="150" x2="100" y2="380" />
+    <line x1="150" y1="150" x2="150" y2="380" />
+    <line x1="200" y1="150" x2="200" y2="380" />
+    <line x1="250" y1="150" x2="250" y2="380" />
+    <line x1="300" y1="150" x2="300" y2="380" />
+    <line x1="350" y1="150" x2="350" y2="380" />
+    <line x1="400" y1="150" x2="400" y2="380" />
+
+    <line x1="100" y1="150" x2="400" y2="150" />
+    <line x1="100" y1="200" x2="400" y2="200" />
+    <line x1="100" y1="250" x2="400" y2="250" />
+    <line x1="100" y1="300" x2="400" y2="300" />
+    <line x1="100" y1="350" x2="400" y2="350" />
+    <line x1="100" y1="380" x2="400" y2="380" />
+  </g>
+
+  <!-- Psychrometric chart curves (stylized) -->
+  <g filter="url(#glow)">
+    <!-- Humidity curves -->
+    <path d="M 120,360 Q 180,340 240,300 Q 300,260 360,200"
+          fill="none" stroke="url(#chartGradient)" stroke-width="3" opacity="0.7"/>
+    <path d="M 120,340 Q 180,310 240,270 Q 300,230 360,180"
+          fill="none" stroke="url(#chartGradient)" stroke-width="3" opacity="0.6"/>
+    <path d="M 120,320 Q 180,280 240,240 Q 300,200 360,160"
+          fill="none" stroke="url(#chartGradient)" stroke-width="3" opacity="0.5"/>
+    <path d="M 120,300 Q 180,250 240,210 Q 300,170 360,140"
+          fill="none" stroke="url(#chartGradient)" stroke-width="3" opacity="0.4"/>
+  </g>
+
+  <!-- Comfort zone (highlighted area) -->
+  <rect x="180" y="220" width="140" height="100"
+        fill="#4caf50" opacity="0.25" rx="8" ry="8"/>
+
+  <!-- Data points -->
+  <circle cx="220" cy="270" r="8" fill="#ff5722" filter="url(#glow)">
+    <animate attributeName="opacity" values="0.8;1;0.8" dur="2s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="270" cy="250" r="8" fill="#2196f3" filter="url(#glow)">
+    <animate attributeName="opacity" values="1;0.8;1" dur="2s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="290" cy="290" r="8" fill="#ffc107" filter="url(#glow)">
+    <animate attributeName="opacity" values="0.8;1;0.8" dur="2.5s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- Axes -->
+  <g stroke="#ffffff" stroke-width="3" opacity="0.8">
+    <line x1="100" y1="380" x2="410" y2="380" stroke-linecap="round"/>
+    <line x1="100" y1="380" x2="100" y2="140" stroke-linecap="round"/>
+
+    <!-- Arrow heads -->
+    <polygon points="410,380 400,375 400,385" fill="#ffffff"/>
+    <polygon points="100,140 95,150 105,150" fill="#ffffff"/>
+  </g>
+
+  <!-- Temperature symbol (T) -->
+  <text x="390" y="410" font-family="Arial, sans-serif" font-size="24"
+        font-weight="bold" fill="#00bcd4" opacity="0.9">T°</text>
+
+  <!-- Humidity symbol (%) -->
+  <text x="65" y="160" font-family="Arial, sans-serif" font-size="24"
+        font-weight="bold" fill="#00bcd4" opacity="0.9">%</text>
+
+  <!-- Title initials -->
+  <text x="256" y="90" font-family="Arial, sans-serif" font-size="48"
+        font-weight="bold" fill="#ffffff" text-anchor="middle" opacity="0.9">PC</text>
+  <text x="256" y="450" font-family="Arial, sans-serif" font-size="16"
+        fill="#00bcd4" text-anchor="middle" opacity="0.8">Psychrometric</text>
+</svg>
