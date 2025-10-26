@@ -11,12 +11,121 @@ class PsychrometricChartEnhanced extends HTMLElement {
         this._previousValues = new Map();
         this._resizeDebounceTimer = null;
         this._lastRenderTime = 0;
+        this._language = 'fr'; // Default language
+
+        // Internationalization (i18n) translations
+        this.translations = {
+            fr: {
+                // Error messages
+                noPointsConfigured: 'Aucun point ou entité configuré dans la carte !',
+                noValidEntity: 'Aucune entité valide trouvée !',
+                noDataAvailable: 'Aucune donnée disponible',
+
+                // Main labels
+                temperature: 'Température',
+                humidity: 'Humidité',
+                dewPoint: 'Point de rosée',
+                wetBulbTemp: 'Temp. humide',
+                enthalpy: 'Enthalpie',
+                waterContent: 'Teneur eau',
+                absoluteHumidity: 'Humidité abs.',
+                specificVolume: 'Vol. spécifique',
+                pmvIndex: 'Indice PMV',
+                moldRisk: 'Moisissure',
+
+                // Actions
+                action: 'Action',
+                totalPower: 'Puissance totale',
+                heating: 'Chauffage',
+                cooling: 'Refroidissement',
+                humidification: 'Humidification',
+                dehumidification: 'Déshumidification',
+                idealSetpoint: 'Consigne idéale',
+
+                // Comfort
+                optimalComfort: 'Confort optimal',
+                comfortZone: 'Zone de confort',
+
+                // Legend and UI
+                legend: 'Légende',
+                minimum: 'Minimum',
+                average: 'Moyenne',
+                maximum: 'Maximum',
+                clickToViewHistory: 'Cliquer pour voir l\'historique',
+
+                // Mold risk levels
+                moldRiskNone: 'Aucun risque',
+                moldRiskVeryLow: 'Très faible',
+                moldRiskLow: 'Faible',
+                moldRiskModerate: 'Modéré',
+                moldRiskHigh: 'Élevé',
+                moldRiskVeryHigh: 'Très élevé',
+                moldRiskCritical: 'Critique'
+            },
+            en: {
+                // Error messages
+                noPointsConfigured: 'No points or entities configured in the card!',
+                noValidEntity: 'No valid entities found!',
+                noDataAvailable: 'No data available',
+
+                // Main labels
+                temperature: 'Temperature',
+                humidity: 'Humidity',
+                dewPoint: 'Dew point',
+                wetBulbTemp: 'Wet bulb temp.',
+                enthalpy: 'Enthalpy',
+                waterContent: 'Water content',
+                absoluteHumidity: 'Absolute humidity',
+                specificVolume: 'Specific volume',
+                pmvIndex: 'PMV Index',
+                moldRisk: 'Mold risk',
+
+                // Actions
+                action: 'Action',
+                totalPower: 'Total power',
+                heating: 'Heating',
+                cooling: 'Cooling',
+                humidification: 'Humidification',
+                dehumidification: 'Dehumidification',
+                idealSetpoint: 'Ideal setpoint',
+
+                // Comfort
+                optimalComfort: 'Optimal comfort',
+                comfortZone: 'Comfort zone',
+
+                // Legend and UI
+                legend: 'Legend',
+                minimum: 'Minimum',
+                average: 'Average',
+                maximum: 'Maximum',
+                clickToViewHistory: 'Click to view history',
+
+                // Mold risk levels
+                moldRiskNone: 'No risk',
+                moldRiskVeryLow: 'Very low',
+                moldRiskLow: 'Low',
+                moldRiskModerate: 'Moderate',
+                moldRiskHigh: 'High',
+                moldRiskVeryHigh: 'Very high',
+                moldRiskCritical: 'Critical'
+            }
+        };
+    }
+
+    // Translation helper method
+    t(key) {
+        return this.translations[this._language][key] || this.translations['fr'][key] || key;
+    }
+
+    // Get language from config or use default
+    getLanguage() {
+        return this.config && this.config.language ? this.config.language : 'fr';
     }
 
     set hass(hass) {
         this._hass = hass;
         if (!this.config || !this.config.points || this.config.points.length === 0) {
-            this.innerHTML = `<p style="color: red;">Aucun point ou entité configuré dans la carte !</p>`;
+            this.innerHTML = `<p style="color: red;">${this.t('noPointsConfigured')}</p>`;
             return;
         }
 
@@ -214,7 +323,7 @@ class PsychrometricChartEnhanced extends HTMLElement {
         const validPoints = points.filter((p) => p !== null);
 
         if (validPoints.length === 0) {
-            this.innerHTML = `<p style="color: red;">Aucune entité valide trouvée !</p>`;
+            this.innerHTML = `<p style="color: red;">${this.t('noValidEntity')}</p>`;
             return;
         }
 
@@ -292,7 +401,7 @@ class PsychrometricChartEnhanced extends HTMLElement {
                                     ${p.label}
                                 </span>
                                 ${p.inComfortZone ?
-                                    `<span style="margin-left: auto; background: linear-gradient(135deg, #4CAF50, #45a049); color: white; padding: 4px 10px; border-radius: 15px; font-size: 11px; box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);">✓ Confort optimal</span>` :
+                                    `<span style="margin-left: auto; background: linear-gradient(135deg, #4CAF50, #45a049); color: white; padding: 4px 10px; border-radius: 15px; font-size: 11px; box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);">✓ ${this.t('optimalComfort')}</span>` :
                                     `<span style="margin-left: auto; background: linear-gradient(135deg, #FF9800, #f57c00); color: white; padding: 4px 10px; border-radius: 15px; font-size: 11px; box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);">⚠ Hors confort</span>`
                                 }
                             </div>
@@ -300,33 +409,33 @@ class PsychrometricChartEnhanced extends HTMLElement {
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                                 <div>
                                     <div class="clickable-value" data-entity="${p.tempEntityId}" data-type="temperature" style="margin-bottom: 5px; padding: 5px; border-radius: 5px; transition: background 0.2s; cursor: pointer;">
-                                        <strong>🌡️ Température:</strong> <span style="color: ${p.color}; font-weight: 600;">${p.temp.toFixed(1)}°C</span>
+                                        <strong>🌡️ ${this.t('temperature')}:</strong> <span style="color: ${p.color}; font-weight: 600;">${p.temp.toFixed(1)}°C</span>
                                     </div>
                                     <div class="clickable-value" data-entity="${p.humidityEntityId}" data-type="humidity" style="margin-bottom: 5px; padding: 5px; border-radius: 5px; transition: background 0.2s; cursor: pointer;">
-                                        <strong>💧 Humidité:</strong> <span style="color: ${p.color}; font-weight: 600;">${p.humidity.toFixed(1)}%</span>
+                                        <strong>💧 ${this.t('humidity')}:</strong> <span style="color: ${p.color}; font-weight: 600;">${p.humidity.toFixed(1)}%</span>
                                     </div>
-                                    <div style="margin-bottom: 5px;"><strong>Point de rosée:</strong> ${p.dewPoint.toFixed(1)}°C</div>
-                                    <div style="margin-bottom: 5px;"><strong>Temp. humide:</strong> ${p.wetBulbTemp.toFixed(1)}°C</div>
-                                    <div style="margin-bottom: 5px;"><strong>Enthalpie:</strong> ${p.enthalpy.toFixed(1)} kJ/kg</div>
+                                    <div style="margin-bottom: 5px;"><strong>${this.t('dewPoint')}:</strong> ${p.dewPoint.toFixed(1)}°C</div>
+                                    <div style="margin-bottom: 5px;"><strong>${this.t('wetBulbTemp')}:</strong> ${p.wetBulbTemp.toFixed(1)}°C</div>
+                                    <div style="margin-bottom: 5px;"><strong>${this.t('enthalpy')}:</strong> ${p.enthalpy.toFixed(1)} kJ/kg</div>
                                 </div>
                                 <div>
-                                    <div style="margin-bottom: 5px;"><strong>Teneur eau:</strong> ${p.waterContent.toFixed(4)} kg/kg</div>
-                                    <div style="margin-bottom: 5px;"><strong>Humidité abs.:</strong> ${p.absoluteHumidity.toFixed(2)} g/m³</div>
-                                    <div style="margin-bottom: 5px;"><strong>Vol. spécifique:</strong> ${p.specificVolume.toFixed(3)} m³/kg</div>
-                                    <div style="margin-bottom: 5px;"><strong>Indice PMV:</strong> ${p.pmv.toFixed(2)}</div>
-                                    ${showMoldRisk ? `<div style="margin-bottom: 5px;"><strong>🦠 Moisissure:</strong> <span style="color: ${this.getMoldRiskColor(p.moldRisk)}; font-weight: 600;">${this.getMoldRiskText(p.moldRisk)}</span></div>` : ''}
+                                    <div style="margin-bottom: 5px;"><strong>${this.t('waterContent')}:</strong> ${p.waterContent.toFixed(4)} kg/kg</div>
+                                    <div style="margin-bottom: 5px;"><strong>${this.t('absoluteHumidity')}:</strong> ${p.absoluteHumidity.toFixed(2)} g/m³</div>
+                                    <div style="margin-bottom: 5px;"><strong>${this.t('specificVolume')}:</strong> ${p.specificVolume.toFixed(3)} m³/kg</div>
+                                    <div style="margin-bottom: 5px;"><strong>${this.t('pmvIndex')}:</strong> ${p.pmv.toFixed(2)}</div>
+                                    ${showMoldRisk ? `<div style="margin-bottom: 5px;"><strong>🦠 ${this.t('moldRisk')}:</strong> <span style="color: ${this.getMoldRiskColor(p.moldRisk)}; font-weight: 600;">${this.getMoldRiskText(p.moldRisk)}</span></div>` : ''}
                                 </div>
                             </div>
 
                             ${p.action ? `
                             <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid ${darkMode ? '#555' : '#ddd'};">
-                                <div style="margin-bottom: 5px;"><strong>⚡ Action:</strong> ${p.action}</div>
-                                <div style="margin-bottom: 5px;"><strong>Puissance totale:</strong> <span style="color: ${p.color}; font-weight: 600;">${p.power.toFixed(1)} W</span></div>
-                                ${p.heatingPower > 0 ? `<div style="margin-bottom: 5px;"><strong>🔥 Chauffage:</strong> ${p.heatingPower.toFixed(1)} W</div>` : ''}
-                                ${p.coolingPower > 0 ? `<div style="margin-bottom: 5px;"><strong>❄️ Refroidissement:</strong> ${p.coolingPower.toFixed(1)} W</div>` : ''}
-                                ${p.humidificationPower > 0 ? `<div style="margin-bottom: 5px;"><strong>💦 Humidification:</strong> ${p.humidificationPower.toFixed(1)} W</div>` : ''}
-                                ${p.dehumidificationPower > 0 ? `<div style="margin-bottom: 5px;"><strong>🌬️ Déshumidification:</strong> ${p.dehumidificationPower.toFixed(1)} W</div>` : ''}
-                                <div style="margin-bottom: 5px;"><strong>🎯 Consigne idéale:</strong> ${p.idealSetpoint.temp.toFixed(1)}°C, ${p.idealSetpoint.humidity.toFixed(0)}%</div>
+                                <div style="margin-bottom: 5px;"><strong>⚡ ${this.t('action')}:</strong> ${p.action}</div>
+                                <div style="margin-bottom: 5px;"><strong>${this.t('totalPower')}:</strong> <span style="color: ${p.color}; font-weight: 600;">${p.power.toFixed(1)} W</span></div>
+                                ${p.heatingPower > 0 ? `<div style="margin-bottom: 5px;"><strong>🔥 ${this.t('heating')}:</strong> ${p.heatingPower.toFixed(1)} W</div>` : ''}
+                                ${p.coolingPower > 0 ? `<div style="margin-bottom: 5px;"><strong>❄️ ${this.t('cooling')}:</strong> ${p.coolingPower.toFixed(1)} W</div>` : ''}
+                                ${p.humidificationPower > 0 ? `<div style="margin-bottom: 5px;"><strong>💦 ${this.t('humidification')}:</strong> ${p.humidificationPower.toFixed(1)} W</div>` : ''}
+                                ${p.dehumidificationPower > 0 ? `<div style="margin-bottom: 5px;"><strong>🌬️ ${this.t('dehumidification')}:</strong> ${p.dehumidificationPower.toFixed(1)} W</div>` : ''}
+                                <div style="margin-bottom: 5px;"><strong>🎯 ${this.t('idealSetpoint')}:</strong> ${p.idealSetpoint.temp.toFixed(1)}°C, ${p.idealSetpoint.humidity.toFixed(0)}%</div>
                             </div>
                             ` : ''}
                         </div>
@@ -514,7 +623,7 @@ class PsychrometricChartEnhanced extends HTMLElement {
                 box-shadow: 0 4px 15px rgba(0, 0, 0, ${darkMode ? '0.5' : '0.2'});
                 text-align: left;
                 animation: ${this._hasRendered ? 'none' : 'fadeInUp 0.5s ease 0.3s backwards'};">
-                <div style="margin-bottom: 8px; font-weight: bold; color: ${textColor}; font-size: 13px;">📍 Légende</div>
+                <div style="margin-bottom: 8px; font-weight: bold; color: ${textColor}; font-size: 13px;">📍 ${this.t('legend')}</div>
                 ${points.map((p, index) => `
                     <div style="
                         display: flex;
@@ -591,7 +700,7 @@ class PsychrometricChartEnhanced extends HTMLElement {
         const modalContainer = this.querySelector('#historyModal');
         const unit = type === 'temperature' ? '°C' : '%';
         const icon = type === 'temperature' ? '🌡️' : '💧';
-        const label = type === 'temperature' ? 'Température' : 'Humidité';
+        const label = type === 'temperature' ? this.t('temperature') : this.t('humidity');
 
         // Calculate statistics
         let min = Infinity, max = -Infinity, sum = 0, count = 0;
@@ -627,15 +736,15 @@ class PsychrometricChartEnhanced extends HTMLElement {
                         border-radius: 10px;">
                         <div style="text-align: center;">
                             <div style="font-size: 24px; font-weight: bold; color: #4CAF50;">${min}${unit}</div>
-                            <div style="font-size: 12px; opacity: 0.7;">Minimum</div>
+                            <div style="font-size: 12px; opacity: 0.7;">${this.t('minimum')}</div>
                         </div>
                         <div style="text-align: center;">
                             <div style="font-size: 24px; font-weight: bold; color: #2196F3;">${avg}${unit}</div>
-                            <div style="font-size: 12px; opacity: 0.7;">Moyenne</div>
+                            <div style="font-size: 12px; opacity: 0.7;">${this.t('average')}</div>
                         </div>
                         <div style="text-align: center;">
                             <div style="font-size: 24px; font-weight: bold; color: #FF5722;">${max}${unit}</div>
-                            <div style="font-size: 12px; opacity: 0.7;">Maximum</div>
+                            <div style="font-size: 12px; opacity: 0.7;">${this.t('maximum')}</div>
                         </div>
                     </div>
 
@@ -690,7 +799,7 @@ class PsychrometricChartEnhanced extends HTMLElement {
             ctx.fillStyle = textColor;
             ctx.font = '16px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText('Aucune donnée disponible', width / 2, height / 2);
+            ctx.fillText(this.t('noDataAvailable'), width / 2, height / 2);
             return;
         }
 
@@ -852,9 +961,9 @@ class PsychrometricChartEnhanced extends HTMLElement {
 
         tooltip.innerHTML = `
             <div style="font-weight: bold; margin-bottom: 5px; color: ${point.color};">${point.label}</div>
-            <div>🌡️ Temp: <strong>${point.temp.toFixed(1)}°C</strong></div>
-            <div>💧 Humidité: <strong>${point.humidity.toFixed(1)}%</strong></div>
-            <div style="margin-top: 5px; font-size: 11px; opacity: 0.8;">Cliquer pour voir l'historique</div>
+            <div>🌡️ ${this.t('temperature')}: <strong>${point.temp.toFixed(1)}°C</strong></div>
+            <div>💧 ${this.t('humidity')}: <strong>${point.humidity.toFixed(1)}%</strong></div>
+            <div style="margin-top: 5px; font-size: 11px; opacity: 0.8;">${this.t('clickToViewHistory')}</div>
         `;
 
         document.body.appendChild(tooltip);
@@ -890,16 +999,16 @@ class PsychrometricChartEnhanced extends HTMLElement {
     }
 
     getMoldRiskText(riskLevel) {
-        const texts = [
-            "Aucun risque",
-            "Très faible",
-            "Faible",
-            "Modéré",
-            "Élevé",
-            "Très élevé",
-            "Critique"
+        const keys = [
+            'moldRiskNone',
+            'moldRiskVeryLow',
+            'moldRiskLow',
+            'moldRiskModerate',
+            'moldRiskHigh',
+            'moldRiskVeryHigh',
+            'moldRiskCritical'
         ];
-        return texts[Math.min(Math.floor(riskLevel), 6)];
+        return this.t(keys[Math.min(Math.floor(riskLevel), 6)]);
     }
     
     drawFullPsychrometricChart(points, options) {
@@ -1116,7 +1225,7 @@ class PsychrometricChartEnhanced extends HTMLElement {
         const comfortLabelX = leftPadding + avgTemp * 12 * scaleX + 10 * scaleX;
         const P_sat_comfort = 0.61078 * Math.exp((17.27 * avgTemp) / (avgTemp + 237.3));
         const comfortLabelY = bottomEdge - ((avgRh / 100) * P_sat_comfort / 4) * chartHeight;
-        ctx.fillText("Zone de confort", comfortLabelX - 45 * scale, comfortLabelY);
+        ctx.fillText(this.t('comfortZone'), comfortLabelX - 45 * scale, comfortLabelY);
 
         // Dessiner les points de mesure avec animation
         points.forEach((point, index) => {
@@ -1404,6 +1513,8 @@ class PsychrometricChartEnhanced extends HTMLElement {
             throw new Error("La configuration doit contenir des points !");
         }
         this.config = config;
+        // Initialize language from config
+        this._language = this.getLanguage();
     }
 
     getCardSize() {

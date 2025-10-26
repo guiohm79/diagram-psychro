@@ -6,6 +6,8 @@
   [![hacs_badge](https://img.shields.io/badge/HACS-Default-41BDF5.svg)](https://github.com/hacs/integration)
   [![GitHub release](https://img.shields.io/github/release/guiohm79/psychrometric-chart-advanced.svg)](https://github.com/guiohm79/psychrometric-chart-advanced/releases)
   [![License](https://img.shields.io/github/license/guiohm79/psychrometric-chart-advanced.svg)](LICENSE)
+
+  **Langue :** [🇬🇧 English](README.en.md) | [🇫🇷 Français](README.md)
 </div>
 
 <img width="589" alt="image" src="https://github.com/guiohm79/psychrometric-chart-advanced/blob/main/Capture.png">
@@ -63,6 +65,11 @@ Ce projet propose une carte personnalisée pour **Home Assistant**, permettant d
 - Légende animée et personnalisable
 - Débit massique ajustable pour calculs de puissance précis
 
+### 🌍 Multilingue
+- Interface en **français** et **anglais**
+- Configurable via le paramètre `language`
+- Tous les labels et messages traduits
+
 ---
 
 ## Installation
@@ -99,6 +106,7 @@ Ajoutez cette configuration YAML à votre tableau de bord dans **Home Assistant*
 
 ```yaml
 type: custom:psychrometric-chart-enhanced
+language: fr  # 'fr' pour français, 'en' pour anglais (défaut: 'fr')
 points:
   - temp: sensor.bme680_temperature
     humidity: sensor.bme680_humidite

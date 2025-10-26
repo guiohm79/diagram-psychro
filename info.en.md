@@ -16,13 +16,13 @@ A modern, interactive psychrometric chart card for Home Assistant that visualize
 - **Modern design** with glassmorphism effects and smooth animations
 - **Dark mode support** with optimized contrast
 - **Multi-sensor support** - Track multiple rooms/zones simultaneously
-- **Multilingual** - Interface en français et anglais (configurable)
+- **Multilingual** - English and French interface (configurable)
 
 ## Configuration
 
 ```yaml
 type: custom:psychrometric-chart-enhanced
-language: fr  # 'fr' pour français, 'en' pour anglais
+language: en  # 'en' for English, 'fr' for French
 points:
   - temp: sensor.temperature
     humidity: sensor.humidity

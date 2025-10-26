@@ -1,4 +1,5 @@
 type: custom:psychrometric-chart-enhanced
+language: fr  # 'fr' pour français, 'en' pour anglais (défaut: 'fr')
 points:
   - temp: sensor.bme680_temperature
     humidity: sensor.bme680_humidite
