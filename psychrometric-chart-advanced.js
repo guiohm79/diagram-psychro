@@ -350,6 +350,9 @@ class PsychrometricChartEnhanced extends HTMLElement {
             language = "fr", // fr, en
         } = this.config;
 
+        // Mettre à jour la langue
+        this._language = language;
+
         // Appliquer le thème sombre si activé
         const actualBgColor = darkMode ? "#121212" : bgColor;
         const actualTextColor = darkMode ? "#ffffff" : textColor;
