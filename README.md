@@ -7,7 +7,7 @@
   [![GitHub release](https://img.shields.io/github/release/guiohm79/psychrometric-chart-advanced.svg)](https://github.com/guiohm79/psychrometric-chart-advanced/releases)
   [![License](https://img.shields.io/github/license/guiohm79/psychrometric-chart-advanced.svg)](LICENSE)
 
-  **Langue :** [🇬🇧 English](README.en.md) | [🇫🇷 Français](README.md)
+  **Language:** [🇬🇧 English](README.md) | [🇫🇷 Français](README.fr.md)
 </div>
 
 <img width="589" alt="image" src="https://github.com/guiohm79/psychrometric-chart-advanced/blob/main/Capture.png">
@@ -16,117 +16,113 @@
 
 ## Description
 
-Ce projet propose une carte personnalisée pour **Home Assistant**, permettant de visualiser un **diagramme psychrométrique** basé sur les données de température et d'humidité des capteurs. La carte calcule également des valeurs clés comme l'enthalpie, la teneur en eau et la température de rosée. Elle indique si des actions sont nécessaires pour réchauffer, refroidir, humidifier ou déshumidifier, tout en estimant les puissances nécessaires pour atteindre la **zone de confort**.
+This project provides a custom card for **Home Assistant**, allowing you to visualize a **psychrometric chart** based on temperature and humidity data from sensors. The card also calculates key values such as enthalpy, water content, and dew point. It indicates whether actions are needed to heat, cool, humidify, or dehumidify, while estimating the power required to reach the **comfort zone**.
 
-## Fonctionnalités
+## Features
 
-### 📊 Visualisation avancée
-- **Diagramme psychrométrique interactif** entièrement responsive
-- **Design moderne** avec effets glassmorphism et animations fluides
-- **Graphique adaptatif** qui s'ajuste automatiquement à la taille de l'écran (mobile, tablette, desktop)
-- **Tooltips au survol** des points avec informations détaillées
+### 📊 Advanced Visualization
+- **Interactive psychrometric chart** fully responsive
+- **Modern design** with glassmorphism effects and smooth animations
+- **Adaptive chart** that automatically adjusts to screen size (mobile, tablet, desktop)
+- **Hover tooltips** on points with detailed information
 
-### 📈 Historique des données
-- **Modal popup élégant** affichant l'historique sur 24 heures
-- **Graphiques d'évolution** pour température et humidité
-- **Statistiques détaillées** : min, max, moyenne
-- **Clic sur les valeurs** de température ou humidité pour voir l'historique
-- Intégration native avec l'API History de Home Assistant
+### 📈 Data History
+- **Elegant modal popup** displaying 24-hour history
+- **Evolution charts** for temperature and humidity
+- **Detailed statistics**: min, max, average
+- **Click on values** of temperature or humidity to see history
+- Native integration with Home Assistant's History API
 
-### 🎨 Interface utilisateur améliorée
-- **Cartes modernes** avec dégradés, ombres portées et effets de profondeur
-- **Animations fluides** lors du chargement et des interactions
-- **Badges de statut** indiquant si les valeurs sont dans la zone de confort
-- **Icônes émojis** pour une meilleure lisibilité
-- **Mode sombre** optimisé avec contraste amélioré
+### 🎨 Enhanced User Interface
+- **Modern cards** with gradients, shadows, and depth effects
+- **Smooth animations** during loading and interactions
+- **Status badges** indicating if values are in the comfort zone
+- **Emoji icons** for better readability
+- **Dark mode** optimized with improved contrast
 
-### 📐 Zone de confort personnalisable
-- Température min/max ajustable
-- Humidité relative min/max configurable
-- Couleur personnalisable pour la zone
-- Indicateurs visuels clairs
+### 📐 Customizable Comfort Zone
+- Adjustable min/max temperature
+- Configurable min/max relative humidity
+- Customizable color for the zone
+- Clear visual indicators
 
-### 🔬 Calculs scientifiques affichés
-- Température de rosée
-- Teneur en eau
-- Enthalpie
-- Humidité absolue
-- Température de bulbe humide
-- Volume spécifique
-- Indice PMV (confort thermique)
-- Risque de moisissure avec code couleur
-- Puissances estimées pour chauffer/refroidir/humidifier/déshumidifier
+### 🔬 Scientific Calculations Displayed
+- Dew point temperature
+- Water content
+- Enthalpy
+- Absolute humidity
+- Wet bulb temperature
+- Specific volume
+- PMV index (thermal comfort)
+- Mold risk with color code
+- Estimated power for heating/cooling/humidifying/dehumidifying
 
-### ⚙️ Options graphiques avancées
-- Courbes d'humidité relative (10 % à 100 %)
-- Courbes d'enthalpie optionnelles
-- Points de rosée visualisés
-- Lignes pointillées vers les axes
-- Légende animée et personnalisable
-- Débit massique ajustable pour calculs de puissance précis
+### ⚙️ Advanced Chart Options
+- Relative humidity curves (10% to 100%)
+- Optional enthalpy curves
+- Visualized dew points
+- Dotted lines to axes
+- Animated and customizable legend
+- Adjustable mass flow rate for precise power calculations
 
-### 🌍 Multilingue
-- Interface en **français** et **anglais**
-- Configurable via le paramètre `language`
-- Tous les labels et messages traduits
+### 🌍 Multilingual
+- **English** and **French** interface
+- Configurable via `language` parameter
+- All labels and messages translated
 
 ---
 
 ## Installation
 
-### Via HACS (recommandé)
+### Via HACS (recommended)
 
-1. Assurez-vous d'avoir [HACS](https://hacs.xyz/) installé dans Home Assistant
-2. Ouvrez HACS dans Home Assistant
-3. Allez dans "Frontend"
-4. Cliquez sur le bouton "+" en bas à droite
-5. Recherchez "Psychrometric Chart"
-6. Cliquez sur "Installer"
-7. Redémarrez Home Assistant
+1. Make sure you have [HACS](https://hacs.xyz/) installed in Home Assistant
+2. Open HACS in Home Assistant
+3. Go to "Frontend"
+4. Click the "+" button in the bottom right
+5. Search for "Psychrometric Chart"
+6. Click "Install"
+7. Restart Home Assistant
 
-### Installation manuelle
+### Manual Installation
 
-1. **Téléchargez les fichiers** de ce dépôt
-2. Placez le fichier **`psychrometric-chart-advanced.js`** dans le dossier **`www/custom-lovelace/psychrometric/`** de votre installation Home Assistant
-3. Ajoutez le fichier à votre tableau de bord via **Configuration > Tableaux de bord > Ressources** :
-   - URL : `/local/custom-lovelace/psychrometric/psychrometric-chart-advanced.js`
-   - Type : **Module JavaScript**
-4. Rechargez l'interface Lovelace dans Home Assistant (CTRL+F5 ou vider le cache)
+1. **Download the files** from this repository
+2. Place the **`psychrometric-chart-advanced.js`** file in the **`www/custom-lovelace/psychrometric/`** folder of your Home Assistant installation
+3. Add the file to your dashboard via **Configuration > Dashboards > Resources**:
+   - URL: `/local/custom-lovelace/psychrometric/psychrometric-chart-advanced.js`
+   - Type: **JavaScript Module**
+4. Reload the Lovelace interface in Home Assistant (CTRL+F5 or clear cache)
 
-### Prérequis
+### Prerequisites
 
-- Home Assistant 2024.1.0 ou supérieur
-- L'**historique** doit être activé dans votre configuration Home Assistant pour profiter de la fonctionnalité d'historique
+- Home Assistant 2024.1.0 or higher
+- **History** must be enabled in your Home Assistant configuration to use the history feature
 
 ---
 
-## Utilisation
+## Usage
 
-Ajoutez cette configuration YAML à votre tableau de bord dans **Home Assistant** :
+Add this YAML configuration to your dashboard in **Home Assistant**:
 
 ```yaml
 type: custom:psychrometric-chart-enhanced
-language: fr  # 'fr' pour français, 'en' pour anglais (défaut: 'fr')
+language: en  # 'en' for English, 'fr' for French (default: 'fr')
 points:
   - temp: sensor.bme680_temperature
-    humidity: sensor.bme680_humidite
+    humidity: sensor.bme680_humidity
     color: "#ff0000"
-    label: Chambre parents
+    label: Master Bedroom
     icon: mdi:bed
-  - temp: sensor.module_interieur_branche_chambre_noah_temperature
-    humidity: sensor.module_interieur_branche_chambre_noah_humidite
+  - temp: sensor.living_room_temperature
+    humidity: sensor.living_room_humidity
     color: "#0000ff"
-    label: Chambre Noah
-    icon: mdi:bed
-  - temp: sensor.module_interieur_branche_module_exterieur_asco_temperature
-    humidity: sensor.module_interieur_branche_module_exterieur_asco_humidite
-    color: "#00ff00"
-    label: Exterieur
-  - temp: sensor.module_interieur_branche_temperature
-    humidity: sensor.module_interieur_branche_humidite
-    color: "#8B4513"
-    label: Salon
+    label: Living Room
     icon: mdi:sofa
+  - temp: sensor.outdoor_temperature
+    humidity: sensor.outdoor_humidity
+    color: "#00ff00"
+    label: Outdoor
+    icon: mdi:weather-sunny
 bgColor: "#000000"
 textColor: "#ffffff"
 gridColor: rgba(0, 238, 254, 0.15)
@@ -139,10 +135,109 @@ comfortRange:
   rhMax: 60
 comfortColor: rgba(144, 238, 144, 0.3)
 massFlowRate: 0.5
-chartTitle: Diagramme Psychrométrique
+chartTitle: Psychrometric Chart
 darkMode: true
 showMoldRisk: true
 displayMode: advanced
 showEnthalpy: true
 showLegend: false
 showPointLabels: true
+```
+
+### Configuration Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `type` | string | **Yes** | - | Must be `custom:psychrometric-chart-enhanced` |
+| `language` | string | No | `fr` | Interface language: `en` (English) or `fr` (French) |
+| `points` | list | **Yes** | - | List of sensor points to display |
+| `points[].temp` | string | **Yes** | - | Temperature sensor entity ID |
+| `points[].humidity` | string | **Yes** | - | Humidity sensor entity ID |
+| `points[].color` | string | No | Random | Point color (hex format) |
+| `points[].label` | string | No | - | Point label |
+| `points[].icon` | string | No | `mdi:home` | MDI icon |
+| `bgColor` | string | No | `#ffffff` | Background color |
+| `textColor` | string | No | `#000000` | Text color |
+| `gridColor` | string | No | `rgba(0,0,0,0.15)` | Grid color |
+| `curveColor` | string | No | `#3B58DD` | Humidity curves color |
+| `showCalculatedData` | boolean | No | `true` | Show calculated data cards |
+| `comfortRange` | object | No | - | Comfort zone configuration |
+| `comfortRange.tempMin` | number | No | `18` | Minimum comfort temperature (°C) |
+| `comfortRange.tempMax` | number | No | `22` | Maximum comfort temperature (°C) |
+| `comfortRange.rhMin` | number | No | `40` | Minimum comfort relative humidity (%) |
+| `comfortRange.rhMax` | number | No | `60` | Maximum comfort relative humidity (%) |
+| `comfortColor` | string | No | `rgba(144,238,144,0.3)` | Comfort zone color |
+| `massFlowRate` | number | No | `0.5` | Mass flow rate (kg/s) for power calculations |
+| `chartTitle` | string | No | `Psychrometric Chart` | Chart title |
+| `darkMode` | boolean | No | `false` | Enable dark mode |
+| `showMoldRisk` | boolean | No | `true` | Display mold risk indicator |
+| `displayMode` | string | No | `advanced` | Display mode: `simple` or `advanced` |
+| `showEnthalpy` | boolean | No | `false` | Show enthalpy curves |
+| `showLegend` | boolean | No | `true` | Show legend |
+| `showPointLabels` | boolean | No | `true` | Show point labels on chart |
+
+---
+
+## Screenshots
+
+### Comfort Zone Visualization
+The chart clearly displays the comfort zone with customizable temperature and humidity ranges.
+
+### Data History Modal
+Click on any temperature or humidity value to open an elegant modal showing the last 24 hours of data with statistics and evolution charts.
+
+### Multi-sensor Tracking
+Track multiple rooms or zones simultaneously with color-coded points and detailed information for each sensor.
+
+---
+
+## Technical Details
+
+### Psychrometric Calculations
+
+The card uses scientifically accurate formulas to calculate:
+
+- **Dew point**: Temperature at which water vapor condenses
+- **Wet bulb temperature**: Temperature measured with a wet thermometer
+- **Enthalpy**: Total heat content of air (kJ/kg)
+- **Water content**: Mass of water vapor per kg of dry air
+- **Absolute humidity**: Mass of water vapor per m³ of air
+- **Specific volume**: Volume occupied by 1 kg of dry air
+- **PMV index**: Predicted Mean Vote for thermal comfort
+- **Mold risk**: Assessment based on temperature and humidity
+
+### Power Calculations
+
+When a point is outside the comfort zone, the card estimates the power needed to:
+- Heat or cool the air to reach the target temperature
+- Humidify or dehumidify to reach the target humidity
+- Total power is calculated based on the configured mass flow rate
+
+---
+
+## Contributing
+
+Contributions are welcome! Feel free to:
+- Report bugs via [GitHub Issues](https://github.com/guiohm79/psychrometric-chart-advanced/issues)
+- Suggest new features
+- Submit pull requests
+
+---
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## Changelog
+
+See [Releases](https://github.com/guiohm79/psychrometric-chart-advanced/releases) for version history and changes.
+
+---
+
+## Support
+
+If you find this project helpful, please ⭐ star the repository on GitHub!
+
+For questions or support, please open an issue on GitHub.
