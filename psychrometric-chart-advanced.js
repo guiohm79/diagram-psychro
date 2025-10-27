@@ -1412,29 +1412,30 @@ class PsychrometricChartEnhanced extends HTMLElement {
         // Ce calcul ne suit PAS la norme ISO 7730 complète (nécessiterait ~50 lignes)
         // Pour une évaluation précise du confort thermique, utilisez un logiciel spécialisé
         // Paramètres standards: vêtements=0.7 clo, activité=1.2 met, vitesse air=0.1 m/s
-        
+
         // Conversion en paramètres nécessaires
         const ta = temp; // Température de l'air
         const tr = temp; // Température radiante (supposée égale à la température de l'air)
         const vel = 0.1; // Vitesse de l'air (m/s)
         const rh_fraction = humidity / 100;
         const clo = 0.7; // Isolation des vêtements
-        const met = 1.2; // Niveau d'activité métabolique
-        
+        const met = 1.2; // Niveau d'activité métabolique (en met)
+        const M = met * 58.15; // Conversion en W/m² pour les calculs de charge thermique
+
         // Facteurs de correction basés sur les formules de Fanger
         const pa = rh_fraction * 10 * Math.exp(16.6536 - 4030.183 / (ta + 235)); // Pression de vapeur
-        
+
         // Calcul simplifié du PMV basé sur une approximation de l'équation de Fanger
-        let pmv = 0.303 * Math.exp(-0.036 * met) + 0.028;
-        pmv *= (met - 58.15) - 0.42 * (met - 50) - 0.0173 * met * (5.87 - pa) 
-             - 0.0014 * met * (34 - ta) - 3.96 * Math.pow(10, -8) * 0.7 * (Math.pow(tr + 273, 4) - Math.pow(ta + 273, 4))
+        let pmv = 0.303 * Math.exp(-0.036 * M) + 0.028;
+        pmv *= (M - 58.15) - 0.42 * (M - 50) - 0.0173 * M * (5.87 - pa)
+             - 0.0014 * M * (34 - ta) - 3.96 * Math.pow(10, -8) * 0.7 * (Math.pow(tr + 273, 4) - Math.pow(ta + 273, 4))
              - 0.072 * 0.7 * (34 - ta) - 0.054 * (5.87 - pa);
-        
+
         // Ajustement pour la vitesse de l'air
         if (vel > 0.1) {
             pmv -= 0.2223 * (1 - Math.exp(-1.387 * vel));
         }
-        
+
         // Limiter PMV à la plage -3 à +3
         return Math.max(-3, Math.min(3, pmv));
     }
