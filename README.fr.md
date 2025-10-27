@@ -7,7 +7,7 @@
   [![GitHub release](https://img.shields.io/github/release/guiohm79/psychrometric-chart-advanced.svg)](https://github.com/guiohm79/psychrometric-chart-advanced/releases)
   [![License](https://img.shields.io/github/license/guiohm79/psychrometric-chart-advanced.svg)](LICENSE)
 
-  **Langue :** [🇬🇧 English](README.en.md) | [🇫🇷 Français](README.md)
+  **Langue :** [🇬🇧 English](README.md) | [🇫🇷 Français](README.fr.md)
 </div>
 
 <img width="589" alt="image" src="https://github.com/guiohm79/psychrometric-chart-advanced/blob/main/Capture.png">
