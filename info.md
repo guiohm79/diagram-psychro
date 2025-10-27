@@ -2,21 +2,21 @@
   <img src="icon.svg" alt="Psychrometric Chart" width="120"/>
 </div>
 
-# Psychrometric Chart for Home Assistant
+# Diagramme Psychrométrique pour Home Assistant
 
-A modern, interactive psychrometric chart card for Home Assistant that visualizes temperature and humidity data from your sensors with advanced calculations and beautiful UI.
+Une carte moderne et interactive avec diagramme psychrométrique pour Home Assistant qui visualise les données de température et d'humidité de vos capteurs avec des calculs avancés et une interface élégante.
 
-## Features
+## Fonctionnalités
 
-- **Interactive psychrometric diagram** with responsive design
-- **Historical data visualization** - Click on temperature or humidity values to see 24h history
-- **Comfort zone indication** with customizable ranges
-- **Advanced calculations**: dew point, absolute humidity, enthalpy, wet bulb temperature, PMV index
-- **Power estimation** for heating/cooling/humidifying/dehumidifying
-- **Modern design** with glassmorphism effects and smooth animations
-- **Dark mode support** with optimized contrast
-- **Multi-sensor support** - Track multiple rooms/zones simultaneously
-- **Multilingual** - Interface en français et anglais (configurable)
+- **Diagramme psychrométrique interactif** avec design responsive
+- **Visualisation des données historiques** - Cliquez sur les valeurs de température ou d'humidité pour voir l'historique sur 24h
+- **Indication de la zone de confort** avec plages personnalisables
+- **Calculs avancés** : point de rosée, humidité absolue, enthalpie, température humide, indice PMV
+- **Estimation de puissance** pour le chauffage/refroidissement/humidification/déshumidification
+- **Design moderne** avec effets de glassmorphisme et animations fluides
+- **Support du mode sombre** avec contraste optimisé
+- **Support multi-capteurs** - Suivez plusieurs pièces/zones simultanément
+- **Multilingue** - Interface en français et anglais (configurable)
 
 ## Configuration
 
@@ -27,7 +27,7 @@ points:
   - temp: sensor.temperature
     humidity: sensor.humidity
     color: "#ff0000"
-    label: Living Room
+    label: Salon
     icon: mdi:sofa
 comfortRange:
   tempMin: 18
@@ -38,7 +38,7 @@ showCalculatedData: true
 darkMode: true
 ```
 
-## Requirements
+## Prérequis
 
-- Home Assistant 2024.1.0 or higher
-- History integration enabled for historical data feature
+- Home Assistant 2024.1.0 ou supérieur
+- Intégration de l'historique activée pour la fonctionnalité de données historiques
