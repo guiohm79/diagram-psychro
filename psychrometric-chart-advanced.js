@@ -44,6 +44,7 @@ class PsychrometricChartEnhanced extends HTMLElement {
 
                 // Comfort
                 optimalComfort: 'Confort optimal',
+                outsideComfort: 'Hors confort',
                 comfortZone: 'Zone de confort',
 
                 // Legend and UI
@@ -99,6 +100,7 @@ class PsychrometricChartEnhanced extends HTMLElement {
 
                 // Comfort
                 optimalComfort: 'Optimal comfort',
+                outsideComfort: 'Outside comfort',
                 comfortZone: 'Comfort zone',
 
                 // Legend and UI
@@ -421,7 +423,7 @@ class PsychrometricChartEnhanced extends HTMLElement {
                                 </span>
                                 ${p.inComfortZone ?
                                     `<span style="margin-left: auto; background: linear-gradient(135deg, #4CAF50, #45a049); color: white; padding: 4px 10px; border-radius: 15px; font-size: 11px; box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);">✓ ${this.t('optimalComfort')}</span>` :
-                                    `<span style="margin-left: auto; background: linear-gradient(135deg, #FF9800, #f57c00); color: white; padding: 4px 10px; border-radius: 15px; font-size: 11px; box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);">⚠ Hors confort</span>`
+                                    `<span style="margin-left: auto; background: linear-gradient(135deg, #FF9800, #f57c00); color: white; padding: 4px 10px; border-radius: 15px; font-size: 11px; box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);">⚠ ${this.t('outsideComfort')}</span>`
                                 }
                             </div>
 
