@@ -53,6 +53,14 @@ class PsychrometricChartEnhanced extends HTMLElement {
                 maximum: 'Maximum',
                 clickToViewHistory: 'Cliquer pour voir l\'historique',
 
+                // Action texts
+                warm: 'Réchauffer',
+                cool: 'Refroidir',
+                andHumidify: 'et Humidifier',
+                andDehumidify: 'et Déshumidifier',
+                historyLast24h: 'Historique des dernières 24 heures',
+                dataPoints: 'points de données',
+
                 // Mold risk levels
                 moldRiskNone: 'Aucun risque',
                 moldRiskVeryLow: 'Très faible',
@@ -99,6 +107,14 @@ class PsychrometricChartEnhanced extends HTMLElement {
                 average: 'Average',
                 maximum: 'Maximum',
                 clickToViewHistory: 'Click to view history',
+
+                // Action texts
+                warm: 'Warm up',
+                cool: 'Cool down',
+                andHumidify: 'and Humidify',
+                andDehumidify: 'and Dehumidify',
+                historyLast24h: 'History of the last 24 hours',
+                dataPoints: 'data points',
 
                 // Mold risk levels
                 moldRiskNone: 'No risk',
@@ -255,21 +271,21 @@ class PsychrometricChartEnhanced extends HTMLElement {
             let dehumidificationPower = 0;
 
             if (temp < comfortRange.tempMin) {
-                action = "Réchauffer";
+                action = this.t('warm');
                 heatingPower = this.calculateHeatingPower(temp, comfortRange.tempMin, massFlowRate);
                 power += heatingPower;
             } else if (temp > comfortRange.tempMax) {
-                action = "Refroidir";
+                action = this.t('cool');
                 coolingPower = this.calculateCoolingPower(temp, comfortRange.tempMax, massFlowRate);
                 power += coolingPower;
             }
 
             if (humidity < comfortRange.rhMin) {
-                action = action ? action + " et Humidifier" : "Humidifier";
+                action = action ? action + " " + this.t('andHumidify') : this.t('humidification');
                 humidificationPower = this.calculateHumidityPower(temp, humidity, comfortRange.rhMin, massFlowRate);
                 power += humidificationPower;
             } else if (humidity > comfortRange.rhMax) {
-                action = action ? action + " et Déshumidifier" : "Déshumidifier";
+                action = action ? action + " " + this.t('andDehumidify') : this.t('dehumidification');
                 dehumidificationPower = this.calculateHumidityPower(temp, humidity, comfortRange.rhMax, massFlowRate);
                 power += dehumidificationPower;
             }
@@ -756,7 +772,7 @@ class PsychrometricChartEnhanced extends HTMLElement {
                     </div>
 
                     <div style="margin-top: 15px; font-size: 12px; opacity: 0.6; text-align: center;">
-                        📅 Historique des dernières 24 heures (${count} points de données)
+                        📅 ${this.t('historyLast24h')} (${count} ${this.t('dataPoints')})
                     </div>
                 </div>
             </div>
