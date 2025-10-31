@@ -1359,8 +1359,7 @@ class PsychrometricChartEnhanced extends HTMLElement {
             ctx.setLineDash([]);
         }
 
-        // Dessiner la zone de confort
-        ctx.fillStyle = comfortColor;
+        // Dessiner la zone de confort avec effet 3D dégradé
         ctx.beginPath();
         const comfortPoints = [
             { temp: comfortRange.tempMin, rh: comfortRange.rhMin },
@@ -1375,12 +1374,40 @@ class PsychrometricChartEnhanced extends HTMLElement {
             else ctx.lineTo(x, y);
         });
         ctx.closePath();
+
+        // Créer un dégradé vertical pour effet 3D
+        const avgTemp = (comfortRange.tempMin + comfortRange.tempMax) / 2;
+        const yTop = this.humidityToY(avgTemp, comfortRange.rhMax);
+        const yBottom = this.humidityToY(avgTemp, comfortRange.rhMin);
+
+        const gradient = ctx.createLinearGradient(0, yTop, 0, yBottom);
+        // Extraire les composants de couleur du comfortColor
+        const colorMatch = comfortColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+        if (colorMatch) {
+            const [, r, g, b, a = '0.5'] = colorMatch;
+            const alpha = parseFloat(a);
+            gradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, ${Math.max(0, alpha - 0.2)})`);    // Plus clair en haut
+            gradient.addColorStop(0.5, `rgba(${r}, ${g}, ${b}, ${alpha})`);                     // Couleur normale au milieu
+            gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, ${Math.min(1, alpha + 0.2)})`);    // Plus foncé en bas
+        } else {
+            gradient.addColorStop(0, comfortColor);
+            gradient.addColorStop(1, comfortColor);
+        }
+
+        ctx.fillStyle = gradient;
         ctx.fill();
+
+        // Ajouter une bordure pour renforcer l'effet 3D
+        ctx.strokeStyle = colorMatch
+            ? `rgba(${colorMatch[1]}, ${colorMatch[2]}, ${colorMatch[3]}, ${Math.min(1, parseFloat(colorMatch[4] || '0.5') + 0.3)})`
+            : 'rgba(100, 180, 100, 0.6)';
+        ctx.lineWidth = 2 * scale;
+        ctx.stroke();
 
         // Ajouter un texte pour la zone de confort
         ctx.fillStyle = darkMode ? "rgba(255, 255, 255, 0.7)" : "rgba(0, 0, 0, 0.7)";
         ctx.font = `${Math.max(12, 14 * scale)}px Arial`;
-        const avgTemp = (comfortRange.tempMin + comfortRange.tempMax) / 2;
+        // Réutiliser avgTemp déjà défini ligne 1379 pour éviter la redéclaration
         const avgRh = (comfortRange.rhMin + comfortRange.rhMax) / 2;
         const comfortLabelX = this.tempToX(avgTemp);
         const comfortLabelY = this.humidityToY(avgTemp, avgRh);
