@@ -70,6 +70,11 @@ Ce projet propose une carte personnalisée pour **Home Assistant**, permettant d
 - Configurable via le paramètre `language`
 - Tous les labels et messages traduits
 
+### 🔍 Zoom et navigation
+- **Zoom configurable par YAML** : définissez une plage de température spécifique à afficher
+- **Zoom centré** : la plage configurée est automatiquement centrée dans le diagramme
+- Idéal pour se concentrer sur une zone de température spécifique (ex: 15°C-30°C)
+
 ---
 
 ## Installation
@@ -146,3 +151,52 @@ displayMode: advanced
 showEnthalpy: true
 showLegend: false
 showPointLabels: true
+
+# Options de zoom (optionnel)
+zoom_temp_min: 15      # Température minimale à afficher (°C)
+zoom_temp_max: 30      # Température maximale à afficher (°C)
+zoom_humidity_min: 30  # Humidité minimale à afficher (%) - optionnel
+zoom_humidity_max: 70  # Humidité maximale à afficher (%) - optionnel
+```
+
+---
+
+## Configuration du zoom
+
+Le diagramme psychrométrique supporte le zoom pour se concentrer sur une plage de température spécifique. Ceci est particulièrement utile si vous souhaitez voir en détail une zone restreinte (par exemple, 15°C à 30°C pour une habitation).
+
+### Options de zoom
+
+| Paramètre | Type | Défaut | Description |
+|-----------|------|--------|-------------|
+| `zoom_temp_min` | number | `null` | Température minimale à afficher (en °C). Le diagramme sera automatiquement zoomé pour afficher cette plage. |
+| `zoom_temp_max` | number | `null` | Température maximale à afficher (en °C). Doit être supérieur à `zoom_temp_min`. |
+| `zoom_humidity_min` | number | `null` | Humidité minimale à afficher (en %). Optionnel, permet de centrer verticalement aussi. |
+| `zoom_humidity_max` | number | `null` | Humidité maximale à afficher (en %). Optionnel, doit être supérieur à `zoom_humidity_min`. |
+
+### Exemple : Zoom sur 15°C - 30°C
+
+```yaml
+type: custom:psychrometric-chart-enhanced
+points:
+  - temp: sensor.temperature
+    humidity: sensor.humidity
+    color: "#ff0000"
+    label: Salon
+zoom_temp_min: 15
+zoom_temp_max: 30
+```
+
+### Exemple : Zoom complet (température + humidité)
+
+```yaml
+type: custom:psychrometric-chart-enhanced
+points:
+  - temp: sensor.temperature
+    humidity: sensor.humidity
+    color: "#ff0000"
+    label: Chambre
+zoom_temp_min: 18
+zoom_temp_max: 26
+zoom_humidity_min: 40
+zoom_humidity_max: 60

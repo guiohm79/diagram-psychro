@@ -70,6 +70,11 @@ This project provides a custom card for **Home Assistant**, allowing you to visu
 - Configurable via `language` parameter
 - All labels and messages translated
 
+### 🔍 Zoom and Navigation
+- **YAML-configurable zoom**: define a specific temperature range to display
+- **Centered zoom**: configured range is automatically centered on the chart
+- Ideal for focusing on a specific temperature zone (e.g., 15°C-30°C)
+
 ---
 
 ## Installation
@@ -142,6 +147,12 @@ displayMode: advanced
 showEnthalpy: true
 showLegend: false
 showPointLabels: true
+
+# Zoom options (optional)
+zoom_temp_min: 15      # Minimum temperature to display (°C)
+zoom_temp_max: 30      # Maximum temperature to display (°C)
+zoom_humidity_min: 30  # Minimum humidity to display (%) - optional
+zoom_humidity_max: 70  # Maximum humidity to display (%) - optional
 ```
 
 ### Configuration Parameters
@@ -175,6 +186,51 @@ showPointLabels: true
 | `showEnthalpy` | boolean | No | `false` | Show enthalpy curves |
 | `showLegend` | boolean | No | `true` | Show legend |
 | `showPointLabels` | boolean | No | `true` | Show point labels on chart |
+| `zoom_temp_min` | number | No | `null` | Minimum temperature to display (°C) - enables auto zoom |
+| `zoom_temp_max` | number | No | `null` | Maximum temperature to display (°C) - must be > zoom_temp_min |
+| `zoom_humidity_min` | number | No | `null` | Minimum humidity to display (%) - optional vertical centering |
+| `zoom_humidity_max` | number | No | `null` | Maximum humidity to display (%) - must be > zoom_humidity_min |
+
+---
+
+## Zoom Configuration
+
+The psychrometric chart supports zoom to focus on a specific temperature range. This is particularly useful if you want to see details in a restricted area (e.g., 15°C to 30°C for a home).
+
+### Zoom Options
+
+The zoom feature allows you to:
+- **Define a temperature range** via YAML configuration (`zoom_temp_min` and `zoom_temp_max`)
+- **Optionally define a humidity range** for vertical centering (`zoom_humidity_min` and `zoom_humidity_max`)
+- The chart automatically centers and scales to display the configured range
+
+### Example: Zoom on 15°C - 30°C
+
+```yaml
+type: custom:psychrometric-chart-enhanced
+points:
+  - temp: sensor.temperature
+    humidity: sensor.humidity
+    color: "#ff0000"
+    label: Living Room
+zoom_temp_min: 15
+zoom_temp_max: 30
+```
+
+### Example: Full zoom (temperature + humidity)
+
+```yaml
+type: custom:psychrometric-chart-enhanced
+points:
+  - temp: sensor.temperature
+    humidity: sensor.humidity
+    color: "#ff0000"
+    label: Bedroom
+zoom_temp_min: 18
+zoom_temp_max: 26
+zoom_humidity_min: 40
+zoom_humidity_max: 60
+```
 
 ---
 
