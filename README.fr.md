@@ -238,5 +238,5 @@ points:
     label: Chambre
 zoom_temp_min: 18
 zoom_temp_max: 26
-zoom_humidity_min: 40
-zoom_humidity_max: 60
+zoom_humidity_min: 20
+zoom_humidity_max: 30
