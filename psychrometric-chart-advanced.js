@@ -481,7 +481,7 @@ class PsychrometricChartEnhanced extends HTMLElement {
                                     <div style="margin-bottom: 5px;"><strong>${this.t('waterContent')}:</strong> ${p.waterContent.toFixed(4)} kg/kg</div>
                                     <div style="margin-bottom: 5px;"><strong>${this.t('absoluteHumidity')}:</strong> ${p.absoluteHumidity.toFixed(2)} g/m³</div>
                                     <div style="margin-bottom: 5px;"><strong>${this.t('specificVolume')}:</strong> ${p.specificVolume.toFixed(3)} m³/kg</div>
-                                    ${showMoldRisk ? `<div style="margin-bottom: 5px;"><strong>🦠 ${this.t('moldRisk')}:</strong> <span style="color: ${this.getMoldRiskColor(p.moldRisk)}; font-weight: 600;">${this.getMoldRiskText(p.moldRisk)}</span></div>` : ''}
+                                    ${showMoldRisk ? `<div style="margin-bottom: 5px;"><strong>🦠 ${this.t('moldRisk')}:</strong> <span style="color: ${this.getMoldRiskColor(p.moldRisk, darkMode)}; font-weight: 600;">${this.getMoldRiskText(p.moldRisk)}</span></div>` : ''}
                                     ` : ''}
                                 </div>
                             </div>
@@ -1112,8 +1112,18 @@ class PsychrometricChartEnhanced extends HTMLElement {
         );
     }
 
-    getMoldRiskColor(riskLevel) {
-        const colors = {
+    getMoldRiskColor(riskLevel, darkMode = false) {
+        const lightModeColors = {
+            0: "#2E7D32", // Vert foncé - Aucun risque
+            1: "#558B2F", // Vert clair foncé - Très faible
+            2: "#9E9D24", // Jaune-vert foncé - Faible
+            3: "#F9A825", // Or foncé - Modéré (meilleur contraste sur fond clair)
+            4: "#EF6C00", // Ambre foncé - Élevé
+            5: "#E65100", // Orange foncé - Très élevé
+            6: "#C62828"  // Rouge foncé - Critique
+        };
+
+        const darkModeColors = {
             0: "#4CAF50", // Vert - Aucun risque
             1: "#8BC34A", // Vert clair - Très faible
             2: "#CDDC39", // Jaune-vert - Faible
@@ -1122,6 +1132,8 @@ class PsychrometricChartEnhanced extends HTMLElement {
             5: "#FF9800", // Orange - Très élevé
             6: "#FF5722"  // Rouge - Critique
         };
+
+        const colors = darkMode ? darkModeColors : lightModeColors;
         return colors[Math.min(Math.floor(riskLevel), 6)];
     }
 
