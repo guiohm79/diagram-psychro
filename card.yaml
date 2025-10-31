@@ -40,7 +40,7 @@ massFlowRate: 0.5
 chartTitle: Diagramme Psychrométrique
 darkMode: true
 showMoldRisk: true
-displayMode: advanced
+displayMode: standard
 showEnthalpy: true
 showLegend: true
 showPointLabels: false

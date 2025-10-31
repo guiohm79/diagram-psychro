@@ -143,7 +143,7 @@ massFlowRate: 0.5
 chartTitle: Psychrometric Chart
 darkMode: true
 showMoldRisk: true
-displayMode: advanced
+displayMode: standard
 showEnthalpy: true
 showLegend: false
 showPointLabels: true
@@ -182,7 +182,7 @@ zoom_humidity_max: 70  # Maximum humidity to display (%) - optional
 | `chartTitle` | string | No | `Psychrometric Chart` | Chart title |
 | `darkMode` | boolean | No | `false` | Enable dark mode |
 | `showMoldRisk` | boolean | No | `true` | Display mold risk indicator |
-| `displayMode` | string | No | `advanced` | Display mode: `simple` or `advanced` |
+| `displayMode` | string | No | `standard` | Display mode: `minimal`, `standard`, or `advanced` |
 | `showEnthalpy` | boolean | No | `false` | Show enthalpy curves |
 | `showLegend` | boolean | No | `true` | Show legend |
 | `showPointLabels` | boolean | No | `true` | Show point labels on chart |
@@ -190,6 +190,46 @@ zoom_humidity_max: 70  # Maximum humidity to display (%) - optional
 | `zoom_temp_max` | number | No | `null` | Maximum temperature to display (°C) - must be > zoom_temp_min |
 | `zoom_humidity_min` | number | No | `null` | Minimum humidity to display (%) - optional vertical centering |
 | `zoom_humidity_max` | number | No | `null` | Maximum humidity to display (%) - must be > zoom_humidity_min |
+
+---
+
+## Display Modes
+
+The `displayMode` parameter allows you to control the level of detail shown in the calculated data section. Three modes are available:
+
+### 🔹 minimal
+Shows only basic measurements:
+- Temperature
+- Humidity
+- Comfort status badges
+
+### 🔹 standard (default)
+Shows basic measurements plus key psychrometric calculations:
+- Temperature
+- Humidity
+- Comfort status badges
+- Dew point
+- Wet bulb temperature
+- Enthalpy
+- PMV Index (thermal comfort)
+
+### 🔹 advanced
+Shows all available calculations and recommendations:
+- All data from standard mode
+- Water content
+- Absolute humidity
+- Specific volume
+- Mold risk (if `showMoldRisk: true`)
+- Action recommendations (heat, cool, humidify, dehumidify)
+- Power calculations for each action
+- Ideal setpoint
+
+**Example:**
+```yaml
+type: custom:psychrometric-chart-enhanced
+displayMode: minimal  # or 'standard' or 'advanced'
+# ... other parameters
+```
 
 ---
 

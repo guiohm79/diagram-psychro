@@ -147,7 +147,7 @@ massFlowRate: 0.5
 chartTitle: Diagramme Psychrométrique
 darkMode: true
 showMoldRisk: true
-displayMode: advanced
+displayMode: standard
 showEnthalpy: true
 showLegend: false
 showPointLabels: true
@@ -157,6 +157,46 @@ zoom_temp_min: 15      # Température minimale à afficher (°C)
 zoom_temp_max: 30      # Température maximale à afficher (°C)
 zoom_humidity_min: 30  # Humidité minimale à afficher (%) - optionnel
 zoom_humidity_max: 70  # Humidité maximale à afficher (%) - optionnel
+```
+
+---
+
+## Modes d'affichage
+
+Le paramètre `displayMode` permet de contrôler le niveau de détail affiché dans la section des données calculées. Trois modes sont disponibles :
+
+### 🔹 minimal
+Affiche uniquement les mesures de base :
+- Température
+- Humidité
+- Badges de statut de confort
+
+### 🔹 standard (par défaut)
+Affiche les mesures de base plus les calculs psychrométriques clés :
+- Température
+- Humidité
+- Badges de statut de confort
+- Point de rosée
+- Température de bulbe humide
+- Enthalpie
+- Indice PMV (confort thermique)
+
+### 🔹 advanced
+Affiche tous les calculs et recommandations disponibles :
+- Toutes les données du mode standard
+- Teneur en eau
+- Humidité absolue
+- Volume spécifique
+- Risque de moisissure (si `showMoldRisk: true`)
+- Recommandations d'actions (chauffer, refroidir, humidifier, déshumidifier)
+- Calculs de puissance pour chaque action
+- Consigne idéale
+
+**Exemple :**
+```yaml
+type: custom:psychrometric-chart-enhanced
+displayMode: minimal  # ou 'standard' ou 'advanced'
+# ... autres paramètres
 ```
 
 ---

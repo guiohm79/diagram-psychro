@@ -467,20 +467,26 @@ class PsychrometricChartEnhanced extends HTMLElement {
                                     <div class="clickable-value" data-entity="${p.humidityEntityId}" data-type="humidity" style="margin-bottom: 5px; padding: 5px; border-radius: 5px; transition: background 0.2s; cursor: pointer;">
                                         <strong>💧 ${this.t('humidity')}:</strong> <span style="color: ${p.color}; font-weight: 600;">${p.humidity.toFixed(1)}%</span>
                                     </div>
+                                    ${displayMode === "standard" || displayMode === "advanced" ? `
                                     <div style="margin-bottom: 5px;"><strong>${this.t('dewPoint')}:</strong> ${p.dewPoint.toFixed(1)}°C</div>
                                     <div style="margin-bottom: 5px;"><strong>${this.t('wetBulbTemp')}:</strong> ${p.wetBulbTemp.toFixed(1)}°C</div>
                                     <div style="margin-bottom: 5px;"><strong>${this.t('enthalpy')}:</strong> ${p.enthalpy.toFixed(1)} kJ/kg</div>
+                                    ` : ''}
                                 </div>
                                 <div>
+                                    ${displayMode === "standard" || displayMode === "advanced" ? `
+                                    <div style="margin-bottom: 5px;"><strong>${this.t('pmvIndex')}:</strong> ${p.pmv.toFixed(2)}</div>
+                                    ` : ''}
+                                    ${displayMode === "advanced" ? `
                                     <div style="margin-bottom: 5px;"><strong>${this.t('waterContent')}:</strong> ${p.waterContent.toFixed(4)} kg/kg</div>
                                     <div style="margin-bottom: 5px;"><strong>${this.t('absoluteHumidity')}:</strong> ${p.absoluteHumidity.toFixed(2)} g/m³</div>
                                     <div style="margin-bottom: 5px;"><strong>${this.t('specificVolume')}:</strong> ${p.specificVolume.toFixed(3)} m³/kg</div>
-                                    <div style="margin-bottom: 5px;"><strong>${this.t('pmvIndex')}:</strong> ${p.pmv.toFixed(2)}</div>
                                     ${showMoldRisk ? `<div style="margin-bottom: 5px;"><strong>🦠 ${this.t('moldRisk')}:</strong> <span style="color: ${this.getMoldRiskColor(p.moldRisk)}; font-weight: 600;">${this.getMoldRiskText(p.moldRisk)}</span></div>` : ''}
+                                    ` : ''}
                                 </div>
                             </div>
 
-                            ${p.action ? `
+                            ${displayMode === "advanced" && p.action ? `
                             <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid ${darkMode ? '#555' : '#ddd'};">
                                 <div style="margin-bottom: 5px;"><strong>⚡ ${this.t('action')}:</strong> ${p.action}</div>
                                 <div style="margin-bottom: 5px;"><strong>${this.t('totalPower')}:</strong> <span style="color: ${p.color}; font-weight: 600;">${p.power.toFixed(1)} W</span></div>
