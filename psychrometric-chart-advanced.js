@@ -13,6 +13,16 @@ class PsychrometricChartEnhanced extends HTMLElement {
         this._lastRenderTime = 0;
         this._language = 'fr'; // Default language
 
+        // Zoom and pan properties
+        this.zoomLevel = 1.0;
+        this.panX = 0;
+        this.panY = 0;
+        this.minZoom = 0.5;
+        this.maxZoom = 3.0;
+
+        // Configured zoom range (from YAML)
+        this.configuredZoomRange = null;
+
         // Internationalization (i18n) translations
         this.translations = {
             fr: {
@@ -366,10 +376,32 @@ class PsychrometricChartEnhanced extends HTMLElement {
             displayMode = "standard", // standard, minimal, advanced
             unitSystem = "metric", // metric, imperial
             language = "fr", // fr, en
+            // Zoom configuration
+            zoom_temp_min = null,
+            zoom_temp_max = null,
+            zoom_humidity_min = null,
+            zoom_humidity_max = null,
         } = this.config;
 
         // Mettre à jour la langue
         this._language = language;
+
+        // Calculate zoom and pan from configured range
+        if (zoom_temp_min !== null && zoom_temp_max !== null) {
+            this.configuredZoomRange = {
+                tempMin: zoom_temp_min,
+                tempMax: zoom_temp_max,
+                humidityMin: zoom_humidity_min,
+                humidityMax: zoom_humidity_max
+            };
+            this.calculateZoomFromRange();
+        } else {
+            // Reset to default if no zoom configuration
+            this.zoomLevel = 1.0;
+            this.panX = 0;
+            this.panY = 0;
+            this.configuredZoomRange = null;
+        }
 
         // Appliquer le thème sombre si activé
         const actualBgColor = darkMode ? "#121212" : bgColor;
@@ -435,20 +467,26 @@ class PsychrometricChartEnhanced extends HTMLElement {
                                     <div class="clickable-value" data-entity="${p.humidityEntityId}" data-type="humidity" style="margin-bottom: 5px; padding: 5px; border-radius: 5px; transition: background 0.2s; cursor: pointer;">
                                         <strong>💧 ${this.t('humidity')}:</strong> <span style="color: ${p.color}; font-weight: 600;">${p.humidity.toFixed(1)}%</span>
                                     </div>
+                                    ${displayMode === "standard" || displayMode === "advanced" ? `
                                     <div style="margin-bottom: 5px;"><strong>${this.t('dewPoint')}:</strong> ${p.dewPoint.toFixed(1)}°C</div>
                                     <div style="margin-bottom: 5px;"><strong>${this.t('wetBulbTemp')}:</strong> ${p.wetBulbTemp.toFixed(1)}°C</div>
                                     <div style="margin-bottom: 5px;"><strong>${this.t('enthalpy')}:</strong> ${p.enthalpy.toFixed(1)} kJ/kg</div>
+                                    ` : ''}
                                 </div>
                                 <div>
+                                    ${displayMode === "standard" || displayMode === "advanced" ? `
+                                    <div style="margin-bottom: 5px;"><strong>${this.t('pmvIndex')}:</strong> ${p.pmv.toFixed(2)}</div>
+                                    ` : ''}
+                                    ${displayMode === "advanced" ? `
                                     <div style="margin-bottom: 5px;"><strong>${this.t('waterContent')}:</strong> ${p.waterContent.toFixed(4)} kg/kg</div>
                                     <div style="margin-bottom: 5px;"><strong>${this.t('absoluteHumidity')}:</strong> ${p.absoluteHumidity.toFixed(2)} g/m³</div>
                                     <div style="margin-bottom: 5px;"><strong>${this.t('specificVolume')}:</strong> ${p.specificVolume.toFixed(3)} m³/kg</div>
-                                    <div style="margin-bottom: 5px;"><strong>${this.t('pmvIndex')}:</strong> ${p.pmv.toFixed(2)}</div>
-                                    ${showMoldRisk ? `<div style="margin-bottom: 5px;"><strong>🦠 ${this.t('moldRisk')}:</strong> <span style="color: ${this.getMoldRiskColor(p.moldRisk)}; font-weight: 600;">${this.getMoldRiskText(p.moldRisk)}</span></div>` : ''}
+                                    ${showMoldRisk ? `<div style="margin-bottom: 5px;"><strong>🦠 ${this.t('moldRisk')}:</strong> <span style="color: ${this.getMoldRiskColor(p.moldRisk, darkMode)}; font-weight: 600;">${this.getMoldRiskText(p.moldRisk)}</span></div>` : ''}
+                                    ` : ''}
                                 </div>
                             </div>
 
-                            ${p.action ? `
+                            ${displayMode === "advanced" && p.action ? `
                             <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid ${darkMode ? '#555' : '#ddd'};">
                                 <div style="margin-bottom: 5px;"><strong>⚡ ${this.t('action')}:</strong> ${p.action}</div>
                                 <div style="margin-bottom: 5px;"><strong>${this.t('totalPower')}:</strong> <span style="color: ${p.color}; font-weight: 600;">${p.power.toFixed(1)} W</span></div>
@@ -914,6 +952,9 @@ class PsychrometricChartEnhanced extends HTMLElement {
         const canvas = this.querySelector('#psychroChart');
         if (!canvas) return;
 
+        // Note: Canvas is recreated on each render (innerHTML replacement)
+        // so we need to reattach events every time - no flag needed
+
         let tooltip = null;
 
         canvas.addEventListener('mousemove', (e) => {
@@ -949,14 +990,79 @@ class PsychrometricChartEnhanced extends HTMLElement {
         });
     }
 
+    calculateZoomFromRange() {
+        if (!this.configuredZoomRange) return;
+
+        const { tempMin, tempMax } = this.configuredZoomRange;
+
+        // Full chart temperature range: -10°C to 50°C (60° total)
+        const fullTempRange = 60;
+        const desiredTempRange = tempMax - tempMin;
+
+        // Calculate zoom level based on temperature range
+        // Zoom level = full range / desired range
+        this.zoomLevel = Math.min(this.maxZoom, Math.max(this.minZoom, fullTempRange / desiredTempRange));
+
+        // Calculate pan to center the desired range
+        // Full chart center is at 20°C (middle of -10 to 50)
+        const fullChartCenter = 20;
+        const desiredCenter = (tempMin + tempMax) / 2;
+
+        // Pan offset in temperature units, then convert to pixels
+        const tempOffset = fullChartCenter - desiredCenter;
+        // Convert temperature offset to pixel offset (12 pixels per degree at scale 1.0)
+        this.panX = tempOffset * 12 * (this.canvasWidth / 800) * this.zoomLevel;
+
+        // For humidity, we'll center vertically if min/max specified
+        if (this.configuredZoomRange.humidityMin !== null && this.configuredZoomRange.humidityMax !== null) {
+            // Humidity zoom is more complex due to non-linear vapor pressure scale
+            // For now, we'll just apply a vertical pan to center the desired humidity range
+            const humMin = this.configuredZoomRange.humidityMin;
+            const humMax = this.configuredZoomRange.humidityMax;
+            const humCenter = (humMin + humMax) / 2;
+
+            // Calculate Y position of center humidity at center temperature
+            const centerTemp = desiredCenter;
+            const P_sat = 0.61078 * Math.exp((17.27 * centerTemp) / (centerTemp + 237.3));
+            const P_v_center = (humCenter / 100) * P_sat;
+            const P_v_50 = (50 / 100) * P_sat; // 50% is roughly middle of chart
+
+            // Pan offset to center the desired humidity
+            const humOffset = (P_v_center - P_v_50) / 4 * 500 * (this.canvasHeight / 600);
+            this.panY = humOffset * this.zoomLevel;
+        } else {
+            this.panY = 0;
+        }
+    }
+
     tempToX(temp) {
-        return 50 + (temp + 10) * (this.canvasWidth / 800) * 12;
+        // Convert temperature to X coordinate with zoom and pan applied
+        const scaleX = this.canvasWidth / 800;
+        const baseX = 50 * scaleX + (temp + 10) * 12 * scaleX;
+
+        // Apply zoom and pan transformation
+        if (this.zoomLevel !== 1.0 || this.panX !== 0) {
+            const centerX = this.canvasWidth / 2;
+            return (baseX - centerX) * this.zoomLevel + centerX + this.panX;
+        }
+
+        return baseX;
     }
 
     humidityToY(temp, humidity) {
+        // Convert temperature and humidity to Y coordinate with zoom and pan applied
+        const scaleY = this.canvasHeight / 600;
         const P_sat = 0.61078 * Math.exp((17.27 * temp) / (temp + 237.3));
         const P_v = (humidity / 100) * P_sat;
-        return 550 * (this.canvasHeight / 600) - (P_v / 4) * 500 * (this.canvasHeight / 600);
+        const baseY = 550 * scaleY - (P_v / 4) * 500 * scaleY;
+
+        // Apply zoom and pan transformation
+        if (this.zoomLevel !== 1.0 || this.panY !== 0) {
+            const centerY = this.canvasHeight / 2;
+            return (baseY - centerY) * this.zoomLevel + centerY + this.panY;
+        }
+
+        return baseY;
     }
 
     showTooltip(event, point, canvasRect) {
@@ -1006,8 +1112,18 @@ class PsychrometricChartEnhanced extends HTMLElement {
         );
     }
 
-    getMoldRiskColor(riskLevel) {
-        const colors = {
+    getMoldRiskColor(riskLevel, darkMode = false) {
+        const lightModeColors = {
+            0: "#2E7D32", // Vert foncé - Aucun risque
+            1: "#558B2F", // Vert clair foncé - Très faible
+            2: "#9E9D24", // Jaune-vert foncé - Faible
+            3: "#F9A825", // Or foncé - Modéré (meilleur contraste sur fond clair)
+            4: "#EF6C00", // Ambre foncé - Élevé
+            5: "#E65100", // Orange foncé - Très élevé
+            6: "#C62828"  // Rouge foncé - Critique
+        };
+
+        const darkModeColors = {
             0: "#4CAF50", // Vert - Aucun risque
             1: "#8BC34A", // Vert clair - Très faible
             2: "#CDDC39", // Jaune-vert - Faible
@@ -1016,6 +1132,8 @@ class PsychrometricChartEnhanced extends HTMLElement {
             5: "#FF9800", // Orange - Très élevé
             6: "#FF5722"  // Rouge - Critique
         };
+
+        const colors = darkMode ? darkModeColors : lightModeColors;
         return colors[Math.min(Math.floor(riskLevel), 6)];
     }
 
@@ -1065,11 +1183,6 @@ class PsychrometricChartEnhanced extends HTMLElement {
         ctx.fillStyle = bgColor;
         ctx.fillRect(0, 0, width, height);
 
-        // Dessiner les axes et le quadrillage
-        ctx.strokeStyle = gridColor;
-        ctx.lineWidth = 1 * scale;
-        ctx.setLineDash([5 * scale, 5 * scale]);
-
         // Responsive padding and dimensions
         const leftPadding = 50 * scaleX;
         const rightEdge = 750 * scaleX;
@@ -1078,10 +1191,21 @@ class PsychrometricChartEnhanced extends HTMLElement {
         const chartHeight = bottomEdge - topPadding;
         const chartWidth = rightEdge - leftPadding;
 
-        // Axes de pression de vapeur (vertical)
+        // Draw axes and grid
+        ctx.strokeStyle = gridColor;
+        ctx.lineWidth = 1 * scale;
+        ctx.setLineDash([5 * scale, 5 * scale]);
+
+        // Axes de pression de vapeur (vertical) - grid lines and labels
         ctx.font = `${Math.max(10, 12 * scale)}px Arial`;
         for (let i = 0; i <= 4; i += 0.5) {
-            const y = bottomEdge - (i / 4) * chartHeight;
+            // Convert vapor pressure to Y coordinate using reference temperature
+            // P_v = (rh/100) * P_sat, so rh = 100 * P_v / P_sat
+            const refTemp = 20; // Reference temperature for vapor pressure axis
+            const P_sat = 0.61078 * Math.exp((17.27 * refTemp) / (refTemp + 237.3));
+            const rh = (i / P_sat) * 100;
+            const y = this.humidityToY(refTemp, rh);
+
             ctx.beginPath();
             ctx.moveTo(leftPadding, y);
             ctx.lineTo(rightEdge, y);
@@ -1090,9 +1214,9 @@ class PsychrometricChartEnhanced extends HTMLElement {
             ctx.fillText(`${i.toFixed(1)} kPa`, 10 * scaleX, y + 5 * scaleY);
         }
 
-        // Axes de température (horizontal)
+        // Axes de température (horizontal) - grid lines and labels
         for (let i = -10; i <= 50; i += 5) {
-            const x = leftPadding + (i + 10) * 12 * scaleX;
+            const x = this.tempToX(i);
             ctx.beginPath();
             ctx.moveTo(x, bottomEdge);
             ctx.lineTo(x, topPadding);
@@ -1113,11 +1237,8 @@ class PsychrometricChartEnhanced extends HTMLElement {
             let lastX = 0, lastY = 0;
 
             for (let t = -10; t <= 50; t++) {
-                const P_sat = 0.61078 * Math.exp((17.27 * t) / (t + 237.3));
-                const P_v = (rh / 100) * P_sat;
-
-                const x = leftPadding + (t + 10) * 12 * scaleX;
-                const y = bottomEdge - (P_v / 4) * chartHeight;
+                const x = this.tempToX(t);
+                const y = this.humidityToY(t, rh);
 
                 if (t === -10) {
                     ctx.moveTo(x, y);
@@ -1130,8 +1251,14 @@ class PsychrometricChartEnhanced extends HTMLElement {
             }
 
             ctx.stroke();
+
+            // Draw humidity label at a visible position (center of chart)
+            // Using lastX/lastY (t=50°C) often puts labels outside visible area
+            const labelTemp = 25; // Center temperature, usually visible
+            const labelX = this.tempToX(labelTemp);
+            const labelY = this.humidityToY(labelTemp, rh);
             ctx.fillStyle = textColor;
-            ctx.fillText(`${rh}%`, lastX + 5 * scaleX, lastY);
+            ctx.fillText(`${rh}%`, labelX + 10 * scaleX, labelY - 5 * scaleY);
         }
 
 
@@ -1141,38 +1268,52 @@ class PsychrometricChartEnhanced extends HTMLElement {
             ctx.strokeStyle = darkMode ? "rgba(255, 165, 0, 0.7)" : "rgba(255, 99, 71, 0.7)";
 
             for (let h = 0; h <= 100; h += 10) {
-                ctx.beginPath();
-                let drawn = false;
                 let enthalpy_points = [];
 
+                // Calculate points along the enthalpy curve
                 for (let t = -10; t <= 50; t += 0.5) {
-                    for (let rh = 10; rh <= 100; rh += 5) {
-                        const P_sat = 0.61078 * Math.exp((17.27 * t) / (t + 237.3));
-                        const P_v = (rh / 100) * P_sat;
-                        const W = 0.622 * (P_v / (101.325 - P_v));
-                        const enthalpy = 1.006 * t + W * (2501 + 1.84 * t);
+                    // For a given temperature t and enthalpy h, solve for humidity
+                    // h = 1.006*t + W*(2501 + 1.84*t)
+                    // W = (h - 1.006*t) / (2501 + 1.84*t)
+                    const W = (h - 1.006 * t) / (2501 + 1.84 * t);
 
-                        if (Math.abs(enthalpy - h) < 0.5) {
-                            const x = leftPadding + (t + 10) * 12 * scaleX;
-                            const y = bottomEdge - (P_v / 4) * chartHeight;
+                    if (W < 0 || W > 0.05) continue; // Skip unrealistic humidity values
 
-                            if (!drawn) {
-                                ctx.moveTo(x, y);
-                                drawn = true;
-                            } else {
-                                ctx.lineTo(x, y);
-                            }
+                    // Convert W to relative humidity
+                    // W = 0.622 * (P_v / (101.325 - P_v))
+                    // P_v = W * 101.325 / (0.622 + W)
+                    const P_v = (W * 101.325) / (0.622 + W);
+                    const P_sat = 0.61078 * Math.exp((17.27 * t) / (t + 237.3));
+                    const rh = (P_v / P_sat) * 100;
 
-                            enthalpy_points.push({x, y});
-                            break;
-                        }
+                    if (rh >= 10 && rh <= 100) {
+                        const x = this.tempToX(t);
+                        const y = this.humidityToY(t, rh);
+                        enthalpy_points.push({x, y, t, rh});
                     }
                 }
 
-                ctx.stroke();
+                // Draw smooth curve using quadratic Bezier
+                if (enthalpy_points.length > 2) {
+                    ctx.beginPath();
+                    ctx.moveTo(enthalpy_points[0].x, enthalpy_points[0].y);
+
+                    for (let i = 1; i < enthalpy_points.length - 1; i++) {
+                        const xc = (enthalpy_points[i].x + enthalpy_points[i + 1].x) / 2;
+                        const yc = (enthalpy_points[i].y + enthalpy_points[i + 1].y) / 2;
+                        ctx.quadraticCurveTo(enthalpy_points[i].x, enthalpy_points[i].y, xc, yc);
+                    }
+
+                    // Last segment
+                    const last = enthalpy_points[enthalpy_points.length - 1];
+                    const beforeLast = enthalpy_points[enthalpy_points.length - 2];
+                    ctx.quadraticCurveTo(beforeLast.x, beforeLast.y, last.x, last.y);
+
+                    ctx.stroke();
+                }
 
                 // Ajouter une étiquette pour les courbes d'enthalpie
-                if (drawn && enthalpy_points.length > 0) {
+                if (enthalpy_points.length > 0) {
                     ctx.fillStyle = darkMode ? "rgba(255, 165, 0, 0.9)" : "rgba(255, 99, 71, 0.9)";
 
                     enthalpy_points.sort((a, b) => b.x - a.x);
@@ -1218,8 +1359,7 @@ class PsychrometricChartEnhanced extends HTMLElement {
             ctx.setLineDash([]);
         }
 
-        // Dessiner la zone de confort
-        ctx.fillStyle = comfortColor;
+        // Dessiner la zone de confort avec effet 3D dégradé
         ctx.beginPath();
         const comfortPoints = [
             { temp: comfortRange.tempMin, rh: comfortRange.rhMin },
@@ -1228,35 +1368,57 @@ class PsychrometricChartEnhanced extends HTMLElement {
             { temp: comfortRange.tempMin, rh: comfortRange.rhMax },
         ];
         comfortPoints.forEach((point, index) => {
-            const P_sat = 0.61078 * Math.exp((17.27 * point.temp) / (point.temp + 237.3));
-            const P_v = (point.rh / 100) * P_sat;
-            const x = leftPadding + (point.temp + 10) * 12 * scaleX;
-            const y = bottomEdge - (P_v / 4) * chartHeight;
+            const x = this.tempToX(point.temp);
+            const y = this.humidityToY(point.temp, point.rh);
             if (index === 0) ctx.moveTo(x, y);
             else ctx.lineTo(x, y);
         });
         ctx.closePath();
+
+        // Créer un dégradé vertical pour effet 3D
+        const avgTemp = (comfortRange.tempMin + comfortRange.tempMax) / 2;
+        const yTop = this.humidityToY(avgTemp, comfortRange.rhMax);
+        const yBottom = this.humidityToY(avgTemp, comfortRange.rhMin);
+
+        const gradient = ctx.createLinearGradient(0, yTop, 0, yBottom);
+        // Extraire les composants de couleur du comfortColor
+        const colorMatch = comfortColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+        if (colorMatch) {
+            const [, r, g, b, a = '0.5'] = colorMatch;
+            const alpha = parseFloat(a);
+            gradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, ${Math.max(0, alpha - 0.2)})`);    // Plus clair en haut
+            gradient.addColorStop(0.5, `rgba(${r}, ${g}, ${b}, ${alpha})`);                     // Couleur normale au milieu
+            gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, ${Math.min(1, alpha + 0.2)})`);    // Plus foncé en bas
+        } else {
+            gradient.addColorStop(0, comfortColor);
+            gradient.addColorStop(1, comfortColor);
+        }
+
+        ctx.fillStyle = gradient;
         ctx.fill();
+
+        // Ajouter une bordure pour renforcer l'effet 3D
+        ctx.strokeStyle = colorMatch
+            ? `rgba(${colorMatch[1]}, ${colorMatch[2]}, ${colorMatch[3]}, ${Math.min(1, parseFloat(colorMatch[4] || '0.5') + 0.3)})`
+            : 'rgba(100, 180, 100, 0.6)';
+        ctx.lineWidth = 2 * scale;
+        ctx.stroke();
 
         // Ajouter un texte pour la zone de confort
         ctx.fillStyle = darkMode ? "rgba(255, 255, 255, 0.7)" : "rgba(0, 0, 0, 0.7)";
         ctx.font = `${Math.max(12, 14 * scale)}px Arial`;
-        const avgTemp = (comfortRange.tempMin + comfortRange.tempMax) / 2;
+        // Réutiliser avgTemp déjà défini ligne 1379 pour éviter la redéclaration
         const avgRh = (comfortRange.rhMin + comfortRange.rhMax) / 2;
-        const comfortLabelX = leftPadding + avgTemp * 12 * scaleX + 10 * scaleX;
-        const P_sat_comfort = 0.61078 * Math.exp((17.27 * avgTemp) / (avgTemp + 237.3));
-        const comfortLabelY = bottomEdge - ((avgRh / 100) * P_sat_comfort / 4) * chartHeight;
+        const comfortLabelX = this.tempToX(avgTemp);
+        const comfortLabelY = this.humidityToY(avgTemp, avgRh);
         ctx.fillText(this.t('comfortZone'), comfortLabelX - 45 * scale, comfortLabelY);
 
         // Dessiner les points de mesure avec animation
         points.forEach((point, index) => {
             const { temp, humidity, color, dewPoint } = point;
 
-            const P_sat_temp = 0.61078 * Math.exp((17.27 * temp) / (temp + 237.3));
-            const P_v_actual = (humidity / 100) * P_sat_temp;
-
-            const x = leftPadding + (temp + 10) * 12 * scaleX;
-            const y = bottomEdge - (P_v_actual / 4) * chartHeight;
+            const x = this.tempToX(temp);
+            const y = this.humidityToY(temp, humidity);
 
             // Dessiner le point avec effet pulse
             ctx.fillStyle = color;
@@ -1293,9 +1455,9 @@ class PsychrometricChartEnhanced extends HTMLElement {
 
             // Dessiner le point de rosée si demandé
             if (showDewPoint && displayMode !== "minimal") {
-                const dewP_sat = 0.61078 * Math.exp((17.27 * dewPoint) / (dewPoint + 237.3));
-                const dewX = leftPadding + (dewPoint + 10) * 12 * scaleX;
-                const dewY = bottomEdge - (dewP_sat / 4) * chartHeight;
+                // For dew point, humidity is 100% at dew point temperature
+                const dewX = this.tempToX(dewPoint);
+                const dewY = this.humidityToY(dewPoint, 100);
 
                 // Point de rosée
                 ctx.beginPath();
